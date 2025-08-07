@@ -24,8 +24,8 @@ O projeto AutoMod utiliza uma bancada automatizada para representar fisicamente 
 
 | Cor do Bloco | Combustível     |
 |--------------|-----------------|
-| Vermelho     | Gasolina        |
-| Verde        | Elétrico        |
+| Preto        | Gasolina        |
+| Vermelho     | Elétrico        |
 | Azul         | Híbrido         |
 
 ---
