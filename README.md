@@ -6,6 +6,7 @@
 - [Pedro Henrique](https://github.com/phenrique180)
 - [Thomaz B.](https://github.com/T0MMY-z)
 - [Felipe](https://github.com/felipewnoob)
+- [Rodrigo](https://github.com/jujubssss)
 
 ---
 
