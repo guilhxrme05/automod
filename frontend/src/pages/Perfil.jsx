@@ -1,16 +1,16 @@
-// src/components/Perfil.jsx
+
 
 import React, { useState } from 'react';
 import './Perfil.css';
 
-// --- Dados de Exemplo (Viriam da sua API) ---
+// --- temporario sem api
 const userData = {
   name: 'Felipe Mancini',
   email: 'felipe.mancini@email.com',
   phone: '(48) 1990-1990',
   address: 'casa da prima do felipe',
   memberSince: '01/01/1990',
-  avatar: 'public/images/felipe.png' // Um avatar genérico
+  avatar: 'public/images/felipe.png' 
 };
 
 const userOrders = [
@@ -18,7 +18,7 @@ const userOrders = [
   { id: 'PED-002', car: 'Chevrolet Onix', date: '12/07/2023', status: 'Entregue', value: 'R$ 95.000,00' },
   { id: 'PED-003', car: 'BMW M4', date: '02/06/2023', status: 'Entregue', value: 'R$ 780.000,00' }
 ];
-// --- Fim dos Dados de Exemplo ---
+
 
 
 const Perfil = () => {
@@ -38,7 +38,7 @@ const Perfil = () => {
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
-    // Se estiver cancelando a edição, reseta os dados do formulário
+
     if(isEditing) {
         setFormData({ name: userData.name, email: userData.email, phone: userData.phone, address: userData.address });
     }
@@ -46,9 +46,9 @@ const Perfil = () => {
 
   const handleSaveChanges = (e) => {
     e.preventDefault();
-    // Aqui viria a lógica para salvar os dados na API
+    // lógica para salvar os dados na API
     console.log('Salvando dados:', formData);
-    setIsEditing(false); // Sai do modo de edição
+    setIsEditing(false); // sai do modo de edição
   };
 
 

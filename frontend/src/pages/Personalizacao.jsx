@@ -1,18 +1,18 @@
-// src/components/Personalizacao.jsx
+
 
 import React, { useState } from 'react';
 import './Personalizacao.css';
 
-// --- Dados de Exemplo (Isso viria do backend/API no futuro) ---
 
-// O carro que foi selecionado na tela Home
+
+
 const carData = {
   name: 'Porsche 911',
-  type: 'Esportivo', // Isso definiria quais opções de personalização mostrar
+  type: 'Esportivo', 
  image: '/images/porsche_template.png'
 };
 
-// Opções de personalização baseadas nas suas regras
+// opçoes de personalização 
 const customizationOptions = {
   Esportivo: [
     {
@@ -46,14 +46,14 @@ const customizationOptions = {
       ]
     }
   ]
-  // Aqui você adicionaria as opções para 'Popular' e 'Luxo'
+  // resto das opcoes pra luxo e popular
 };
 
-// --- Fim dos Dados de Exemplo ---
+
 
 
 const Personalizacao = () => {
-  // Estado para guardar as seleções do usuário
+ 
   const [selections, setSelections] = useState({
     corExterna: '#ababab',
     interior: 'url(https://i.imgur.com/8mPYgAD.jpeg)',
@@ -61,12 +61,12 @@ const Personalizacao = () => {
     tracao: 'Traseira'
   });
 
-  // Função para atualizar uma seleção
+ 
   const handleSelect = (key, value) => {
     setSelections(prev => ({ ...prev, [key]: value }));
   };
 
-  // Pega as opções de personalização para o tipo de carro atual
+
   const optionsForCurrentCar = customizationOptions[carData.type];
 
   return (

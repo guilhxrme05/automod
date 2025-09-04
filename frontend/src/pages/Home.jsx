@@ -1,7 +1,7 @@
-import React, { useState } from 'react'; // 1. Importar o useState
+import React, { useState } from 'react';
 import './Home.css';
 
-// Ícone de busca em SVG para usar no input
+// icone provisorio
 const SearchIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -12,7 +12,7 @@ const SearchIcon = () => (
 
 const Home = () => {
   const cars = [
-    // ... (seu array de carros continua o mesmo aqui)
+    
     { name: 'Chevrolet Onix', category: 'Popular', image: 'https://i.imgur.com/8B26f32.png' },
     { name: 'Hyundai HB20', category: 'Popular', image: 'https://i.imgur.com/d722p8W.png' },
     { name: 'Fiat Argo', category: 'Popular', image: 'https://i.imgur.com/bL2a22b.png' },
@@ -33,21 +33,20 @@ const Home = () => {
 
   const filterButtons = ['Todos', 'Popular', 'Esportivo', 'Luxo'];
 
-  // 2. Criar os estados para os filtros
+  // cria os estados para os filtros
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 3. Lógica para filtrar e exibir os carros
+  //  lógica para filtrar e exibir os carros
   const filteredCars = cars
     .filter(car => {
-      // Filtro de Categoria
+      // filtro de Categoria
       if (activeCategory === 'Todos') {
-        return true; // Se for 'Todos', mostra todos os carros
+        return true;
       }
-      return car.category === activeCategory; // Senão, mostra apenas os da categoria ativa
+      return car.category === activeCategory;
     })
     .filter(car => {
-      // Filtro de Busca (procura no nome do carro)
       return car.name.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
@@ -61,7 +60,7 @@ const Home = () => {
 
       <div className="filter-controls">
         <div className="button-group">
-          {/* 4. Conectar os botões ao estado */}
+     
           {filterButtons.map((category, index) => (
             <button 
               key={index} 
@@ -75,7 +74,6 @@ const Home = () => {
         <div className="search-sort-group">
           <div className="search-bar">
             <SearchIcon />
-            {/* 5. Conectar o input de busca ao estado */}
             <input 
               type="text" 
               placeholder="Buscar modelo..." 
@@ -91,7 +89,6 @@ const Home = () => {
       </div>
 
       <main className="car-grid">
-        {/* 6. Mapear a lista JÁ FILTRADA de carros */}
         {filteredCars.map((car, index) => (
           <div key={index} className="car-card">
             <div className="card-image-container">

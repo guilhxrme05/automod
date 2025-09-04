@@ -1,7 +1,7 @@
-// src/components/Register.jsx
+
 
 import React, { useState } from 'react';
-import './Login.css'; // Usaremos o mesmo CSS para Login e Registro
+import './Login.css'; 
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -10,7 +10,7 @@ const Register = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Aqui viria a lógica para enviar os dados para a API
+    // Aqui viria lógica para enviar os dados para a API
     console.log('Dados de Registro:', { email, name, password });
   };
 

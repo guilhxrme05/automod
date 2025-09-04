@@ -1,7 +1,7 @@
 // src/components/Login.jsx
 
 import React, { useState } from 'react';
-import './Login.css'; // Reutilizando o mesmo CSS
+import './Login.css'; 
 
 const Login = () => {
   const [email, setEmail] = useState('');
