@@ -1,0 +1,156 @@
+/* src/components/Personalizacao.css */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
+
+.personalizacao-container {
+  height: 100vh;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  font-family: 'Montserrat', sans-serif;
+  background-image: url('/images/template.png');
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+/* --- PAINEL DA ESQUERDA (CARRO) --- */
+.car-showcase {
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  padding: 2rem 5%;
+}
+
+.logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.car-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.car-info h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 6rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
+}
+
+.car-image {
+  max-width: 90%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4));
+}
+
+/* --- PAINEL DA DIREITA (OPÇÕES) --- */
+.options-panel {
+  height: 100vh;
+  overflow-y: auto; /* A MÁGICA DO SCROLL ACONTECE AQUI */
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  padding: 3rem;
+  color: #111;
+}
+
+/* Estilização da barra de scroll (opcional, mas elegante) */
+.options-panel::-webkit-scrollbar {
+  width: 8px;
+}
+.options-panel::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+}
+.options-panel::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.options-panel::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.options-panel h2 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2.5rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.option-section {
+  margin-bottom: 2.5rem;
+}
+
+.option-section h3 {
+  font-size: 1.2rem;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.option-subsection h4 {
+  font-size: 1rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  gap: 1rem;
+}
+
+.option-swatch {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.option-swatch:hover {
+  transform: scale(1.1);
+}
+
+.option-swatch.selected {
+  border-color: #111;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.toggle-button, .select-button {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.toggle-button:hover, .select-button:hover {
+    background-color: #eee;
+}
+
+.toggle-button.active, .select-button.active {
+    background-color: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+.select-group {
+    display: flex;
+    gap: 0.5rem;
+}

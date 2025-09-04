@@ -1,11 +1,70 @@
-import React from 'react'
+// src/components/Register.jsx
 
-function registro() {
+import React, { useState } from 'react';
+import './Login.css'; // Usaremos o mesmo CSS para Login e Registro
+
+const Register = () => {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Aqui viria a lógica para enviar os dados para a API
+    console.log('Dados de Registro:', { email, name, password });
+  };
+
   return (
-    <div>
-      
-    </div>
-  )
-}
+    <div className="auth-container">
+      <div className="auth-image-panel">
+        <span className="auth-logo">AUTOMOD</span>
+      </div>
+      <div className="auth-form-panel">
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <h1>Registro</h1>
+          
+          <div className="input-group">
+            <label htmlFor="email">Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required 
+            />
+          </div>
+          
+          <div className="input-group">
+            <label htmlFor="name">Nome</label>
+            <input 
+              type="text" 
+              id="name" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required 
+            />
+          </div>
 
-export default registro
+          <div className="input-group">
+            <label htmlFor="password">Senha</label>
+            <input 
+              type="password" 
+              id="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required 
+            />
+          </div>
+
+          <button type="submit" className="auth-button">REGISTRAR</button>
+
+          <p className="auth-link">
+            Já tem uma conta? <a href="/login">Entrar</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Register;

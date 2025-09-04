@@ -1,19 +1,31 @@
-import React from 'react'
-import './Landing.css'
-function landing() {
+// src/components/Landing.jsx
+
+import React from 'react';
+import './Landing.css';
+
+const Landing = () => {
   return (
-    <div className="landingpage-container">
-      <header>
+    <section className="landing-hero">
+      <div className="hero-overlay"></div>
 
+      <header className="landing-header">
+        <span className="logo">AUTOMOD</span>
       </header>
-      <main>
-        <h1 className='titulo'>personalize o carro dos seus sonhos</h1>
+
+      <main className="hero-content">
+        <h1>
+          Personalize o carro
+          <br />
+          dos seus sonhos
+        </h1>
+        <p>Seu carro, suas regras</p>
+        <a href="/personalizacao" className="cta-button">
+          comece aqui
+        </a>
       </main>
-      <footer>
 
-      </footer>
-    </div>
-  )
-}
+    </section>
+  );
+};
 
-export default landing
+export default Landing;
