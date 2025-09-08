@@ -1,9 +1,9 @@
-/* src/components/Home.css */
 
-/* Importando uma fonte mais moderna do Google Fonts */
+
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
-/* Reset básico e configurações globais */
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -19,11 +19,11 @@ body {
 .catalog-container {
   width: 100%;
   min-height: 100vh;
-  padding: 3rem 5%; /* Mais espaçamento nas laterais */
+  padding: 3rem 5%;
   background: linear-gradient(145deg, #1e1e1e 0%, #121212 100%);
 }
 
-/* --- Cabeçalho da Página --- */
+
 .catalog-header {
   text-align: center;
   margin-bottom: 3rem;
@@ -42,12 +42,12 @@ body {
   font-weight: 300;
 }
 
-/* --- Controles de Filtro e Busca --- */
+
 .filter-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo em telas menores */
+  flex-wrap: wrap;
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
@@ -127,10 +127,10 @@ body {
 }
 
 
-/* --- Grade de Carros --- */
+
 .car-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
 }
 
@@ -157,7 +157,7 @@ body {
 
 .car-card img {
   width: 100%;
-  height: 180px; /* Altura fixa para alinhar as imagens */
+  height: 180px;
   object-fit: contain;
   transition: transform 0.3s ease;
 }
@@ -180,21 +180,20 @@ body {
   margin-bottom: 0.75rem;
 }
 
-/* --- ✨ NOVAS CLASSES DE COR PARA AS CATEGORIAS ✨ --- */
 
-/* Cor para a categoria Popular (Azul - confiável e acessível) */
+
 .category-popular {
   color: #3498db;
   background-color: rgba(52, 152, 219, 0.1);
 }
 
-/* Cor para a categoria Luxo (Roxo - sofisticação e realeza) */
+
 .category-luxo {
   color: #9b59b6;
   background-color: rgba(155, 89, 182, 0.1);
 }
 
-/* Cor para a categoria Esportivo (Vermelho - paixão e velocidade) */
+
 .category-esportivo {
   color: #e74c3c;
   background-color: rgba(231, 76, 60, 0.1);

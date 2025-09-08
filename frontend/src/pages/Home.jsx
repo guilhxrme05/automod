@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Importar o useEffect
 import './Home.css';
 
-// icone provisorio
+
 const SearchIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -9,47 +9,56 @@ const SearchIcon = () => (
   </svg>
 );
 
-
 const Home = () => {
-  const cars = [
-    
-    { name: 'Chevrolet Onix', category: 'Popular', image: 'https://i.imgur.com/8B26f32.png' },
-    { name: 'Hyundai HB20', category: 'Popular', image: 'https://i.imgur.com/d722p8W.png' },
-    { name: 'Fiat Argo', category: 'Popular', image: 'https://i.imgur.com/bL2a22b.png' },
-    { name: 'Volkswagen Polo', category: 'Popular', image: 'https://i.imgur.com/UfnSyrd.png' },
-    { name: 'Renault Kwid', category: 'Popular', image: 'https://i.imgur.com/u5j6v6v.png' },
-    { name: 'BMW 320i', category: 'Luxo', image: 'https://i.imgur.com/M8AANjG.png' },
-    { name: 'Mercedes-Benz C180', category: 'Luxo', image: 'https://i.imgur.com/9C3kL2Q.png' },
-    { name: 'Audi Q5', category: 'Luxo', image: 'https://i.imgur.com/g8nN5d4.png' },
-    { name: 'Range Rover Evoque', category: 'Luxo', image: 'https://i.imgur.com/JQLr2xz.png' },
-    { name: 'Volvo XC60', category: 'Luxo', image: 'https://i.imgur.com/aLg17fX.png' },
-    { name: 'Porsche Macan', category: 'Luxo', image: 'https://i.imgur.com/tVjY5Q3.png' },
-    { name: 'Porsche 911', category: 'Esportivo', image: 'https://i.imgur.com/u42B3c1.png' },
-    { name: 'Ford Mustang GT', category: 'Esportivo', image: 'https://i.imgur.com/kS7j84h.png' },
-    { name: 'Chevrolet Corvette', category: 'Esportivo', image: 'https://i.imgur.com/8QG3X5f.png' },
-    { name: 'Porsche 718 Cayman', category: 'Esportivo', image: 'https://i.imgur.com/vHq0gWk.png' },
-    { name: 'BMW M4', category: 'Esportivo', image: 'https://i.imgur.com/Vb8lPqE.png' },
-  ];
-
+  // Estados para guardar os dados da API, carregamento e erros
+  const [cars, setCars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const filterButtons = ['Todos', 'Popular', 'Esportivo', 'Luxo'];
 
-  // cria os estados para os filtros
+  // Estados para os filtros
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
 
-  //  lógica para filtrar e exibir os carros
+
+  useEffect(() => {
+   
+    fetch('http://localhost:3001/api/carros')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('A resposta da rede não foi boa');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setCars(data); 
+        setLoading(false); 
+      })
+      .catch(err => {
+        console.error("Falha ao buscar carros:", err);
+        setError("Não foi possível carregar os modelos. Tente novamente mais tarde.");
+        setLoading(false); 
+      });
+  }, []); 
+
+
   const filteredCars = cars
     .filter(car => {
-      // filtro de Categoria
-      if (activeCategory === 'Todos') {
-        return true;
-      }
-      return car.category === activeCategory;
+      if (activeCategory === 'Todos') return true;
+      return car.categoria === activeCategory;
     })
     .filter(car => {
-      return car.name.toLowerCase().includes(searchTerm.toLowerCase());
+      return car.nome.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
+
+  if (loading) {
+    return <div className="status-message">Carregando modelos...</div>;
+  }
+  if (error) {
+    return <div className="status-message error">{error}</div>;
+  }
 
   return (
     <div className="catalog-container">
@@ -60,13 +69,8 @@ const Home = () => {
 
       <div className="filter-controls">
         <div className="button-group">
-     
           {filterButtons.map((category, index) => (
-            <button 
-              key={index} 
-              className={`filter-button ${activeCategory === category ? 'active' : ''}`}
-              onClick={() => setActiveCategory(category)}
-            >
+            <button key={index} className={`filter-button ${activeCategory === category ? 'active' : ''}`} onClick={() => setActiveCategory(category)}>
               {category}
             </button>
           ))}
@@ -74,12 +78,7 @@ const Home = () => {
         <div className="search-sort-group">
           <div className="search-bar">
             <SearchIcon />
-            <input 
-              type="text" 
-              placeholder="Buscar modelo..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <input type="text" placeholder="Buscar modelo..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
           <select className="sort-dropdown">
             <option value="name-asc">Ordenar por Nome</option>
@@ -89,14 +88,15 @@ const Home = () => {
       </div>
 
       <main className="car-grid">
-        {filteredCars.map((car, index) => (
-          <div key={index} className="car-card">
+        {filteredCars.map((car) => (
+          <div key={car.id} className="car-card">
             <div className="card-image-container">
-              <img src={car.image} alt={car.name} />
+
+              <img src={car.image} alt={car.nome} />
             </div>
             <div className="card-content">
-              <span className={`car-category category-${car.category.toLowerCase()}`}>{car.category}</span>
-              <h3>{car.name}</h3>
+              <span className={`car-category category-${car.categoria.toLowerCase()}`}>{car.categoria}</span>
+              <h3>{car.nome}</h3>
             </div>
           </div>
         ))}
