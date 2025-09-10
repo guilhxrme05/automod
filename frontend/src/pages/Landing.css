@@ -10,7 +10,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  padding: 0 8%;
+  padding: 0 7%;
   color: #ffffff;
   font-family: 'Montserrat', sans-serif;
   
@@ -53,7 +53,7 @@
 
 /* --- CONTEÚDO PRINCIPAL (HERO) --- */
 .hero-content {
-  max-width: 500px; /* Limita a largura do texto */
+  max-width: 600px; /* Limita a largura do texto */
 }
 
 .hero-content h1 {
@@ -86,3 +86,26 @@
   background-color: #ffffff;
   color: #000000;
 }
+
+.perfil {
+  letter-spacing: 1px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white;          /* cor padrão branca */
+  text-decoration: none;  /* tira o sublinhado */
+  cursor: pointer;
+  position: fixed;   
+  top: 35px;        
+  right: 50px;
+}
+
+/* mantém branco mesmo após clicado */
+.perfil:visited {
+  color: white;
+}
+
+/* quando passar o mouse */
+.perfil:hover {
+  color: #ddd; /* um branco mais suave no hover (opcional) */
+}
+

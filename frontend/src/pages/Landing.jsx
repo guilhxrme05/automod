@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import './Landing.css';
 
@@ -10,16 +8,17 @@ const Landing = () => {
 
       <header className="landing-header">
         <span className="logo">AUTOMOD</span>
+        <a href="/perfil" className='perfil'>PERFIL</a>
       </header>
 
       <main className="hero-content">
         <h1>
           Personalize o carro
-          <br />
+          
           dos seus sonhos
         </h1>
         <p>Seu carro, suas regras</p>
-        <a href="/personalizacao" className="cta-button">
+        <a href="/registro" className="cta-button">
           comece aqui
         </a>
       </main>
