@@ -47,7 +47,7 @@ const Login = () => {
           <button type="submit" className="auth-button">ENTRAR</button>
 
           <p className="auth-link">
-            Não tem uma conta? <a href="/register">Registrar</a>
+            Não tem uma conta? <a href="/registro">Registrar</a>
           </p>
         </form>
       </div>

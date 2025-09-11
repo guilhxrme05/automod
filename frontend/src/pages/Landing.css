@@ -87,7 +87,7 @@
   color: #000000;
 }
 
-.perfil {
+.personalizacao {
   letter-spacing: 1px;
   font-size: 1.4rem;
   font-weight: 700;
@@ -96,16 +96,44 @@
   cursor: pointer;
   position: fixed;   
   top: 35px;        
-  right: 50px;
+  right: 100px;
 }
 
 /* mantém branco mesmo após clicado */
-.perfil:visited {
+.personalizacao:visited {
   color: white;
 }
 
 /* quando passar o mouse */
-.perfil:hover {
+.personalizacao:hover {
   color: #ddd; /* um branco mais suave no hover (opcional) */
+}
+
+.icon-profile{
+  font-size: 1.5rem;
+  position: fixed;   
+  top: 30px;        
+  right: 50px;
+}
+
+.icon-profile:visited {
+  color: white;
+}
+
+.icon-profile:hover {
+  color: #ddd; /* um branco mais suave no hover (opcional) */
+}
+
+.home{
+  letter-spacing: 1px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white;          /* cor padrão branca */
+  text-decoration: none;  /* tira o sublinhado */
+  cursor: pointer;
+  position: fixed;   
+  top: 35px;        
+  right: 305px;
+
 }
 
