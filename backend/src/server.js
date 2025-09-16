@@ -14,9 +14,6 @@ const PORTA = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-
-
-
 // Rota de Teste
 app.get('/', async (req, res) => {
   try {
@@ -31,7 +28,7 @@ app.get('/', async (req, res) => {
   }
 });
 
-// Rota para buscar os carros
+// Rota para buscar TODOS os carros
 app.get('/api/carros', async (req, res) => {
     try {
         const query = `
@@ -48,21 +45,100 @@ app.get('/api/carros', async (req, res) => {
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
-        // --- logzinha de erro
         console.error('----------------------------------');
         console.error('🛑 ERRO AO EXECUTAR A CONSULTA SQL:');
         console.error('----------------------------------');
-        console.error('Consulta SQL:', err.query); // Mostra a consulta que falhou
-        console.error('Erro Detalhado:', err.stack); // Mostra o erro completo
+        console.error('Consulta SQL:', err.query);
+        console.error('Erro Detalhado:', err.stack);
         console.error('----------------------------------');
-
         res.status(500).json({ erro: 'Não foi possível buscar os carros.' });
     }
 });
 
+// Rota para buscar UM carro específico pelo ID
+app.get('/api/carros/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const query = `
+            SELECT
+                carros.id,
+                carros.nome,
+                categorias.nome AS categoria,
+                carros.imagem_personalizacao_url AS image 
+            FROM
+                carros
+            JOIN
+                categorias ON carros.categoria_id = categorias.id
+            WHERE
+                carros.id = $1;
+        `;
+        const resultado = await db.query(query, [id]);
+        if (resultado.rows.length > 0) {
+            res.json(resultado.rows[0]);
+        } else {
+            res.status(404).json({ erro: 'Carro não encontrado.' });
+        }
+    } catch (err) {
+        console.error('----------------------------------');
+        console.error('🛑 ERRO AO EXECUTAR A CONSULTA SQL (BUSCA POR ID):');
+        console.error('----------------------------------');
+        console.error('ID Solicitado:', id);
+        console.error('Erro Detalhado:', err.stack);
+        console.error('----------------------------------');
+        res.status(500).json({ erro: 'Não foi possível buscar o carro solicitado.' });
+    }
+});
+
+// Rota para buscar TODOS os pedidos do sistema
+app.get('/api/pedidos', async (req, res) => {
+  try {
+    const query = `
+        SELECT
+            pedidos.id,
+            carros.nome AS carro_nome,
+            pedidos.criado_em,
+            pedidos.status,
+            pedidos.valor
+        FROM
+            pedidos
+        JOIN
+            carros ON pedidos.carro_id = carros.id
+        ORDER BY
+            pedidos.criado_em DESC;
+    `;
+    const resultado = await db.query(query);
+    res.json(resultado.rows);
+  } catch (err) {
+    console.error('🛑 ERRO AO BUSCAR OS PEDIDOS:', err.stack);
+    res.status(500).json({ erro: 'Não foi possível buscar os pedidos.' });
+  }
+});
+
+
+
+// Rota para CRIAR um novo pedido
+app.post('/api/pedidos', async (req, res) => {
+    const { carroId, personalizacoes, valor } = req.body;
+
+    if (!carroId || !personalizacoes || !valor) {
+        return res.status(400).json({ erro: 'Dados do pedido incompletos.' });
+    }
+
+    try {
+        const query = `
+            INSERT INTO pedidos (carro_id, personalizacoes, valor, status)
+            VALUES ($1, $2, $3, 'Em Produção')
+            RETURNING *;
+        `;
+        const resultado = await db.query(query, [carroId, personalizacoes, valor]);
+        res.status(201).json(resultado.rows[0]);
+    } catch (err) {
+        console.error('🛑 ERRO AO CRIAR O PEDIDO:', err.stack);
+        res.status(500).json({ erro: 'Não foi possível salvar o pedido.' });
+    }
+});
 
 
 app.listen(PORTA, () => {
   console.log(`✅ Servidor a rodar em http://localhost:${PORTA}`);
 });
-
