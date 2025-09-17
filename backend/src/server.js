@@ -56,6 +56,7 @@ app.get('/api/carros', async (req, res) => {
 });
 
 // Rota para buscar UM carro específico pelo ID
+// Rota para buscar UM carro específico pelo ID
 app.get('/api/carros/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -64,7 +65,8 @@ app.get('/api/carros/:id', async (req, res) => {
                 carros.id,
                 carros.nome,
                 categorias.nome AS categoria,
-                carros.imagem_personalizacao_url AS image 
+                carros.imagem_personalizacao_url AS image,
+                carros.num_blocos -- <<< ADICIONE ESTA LINHA
             FROM
                 carros
             JOIN
@@ -79,12 +81,7 @@ app.get('/api/carros/:id', async (req, res) => {
             res.status(404).json({ erro: 'Carro não encontrado.' });
         }
     } catch (err) {
-        console.error('----------------------------------');
-        console.error('🛑 ERRO AO EXECUTAR A CONSULTA SQL (BUSCA POR ID):');
-        console.error('----------------------------------');
-        console.error('ID Solicitado:', id);
-        console.error('Erro Detalhado:', err.stack);
-        console.error('----------------------------------');
+        console.error('🛑 ERRO AO EXECUTAR A CONSULTA SQL (BUSCA POR ID):', err.stack);
         res.status(500).json({ erro: 'Não foi possível buscar o carro solicitado.' });
     }
 });

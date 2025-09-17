@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './Personalizacao.css';
 
-
+// A estrutura de TODAS as opções possíveis continua igual
 const customizationOptions = [
   {
     title: 'Motor e Transmissão',
@@ -26,7 +26,6 @@ const customizationOptions = [
   {
     title: 'Rodas e Tração',
     options: [
-     
       { name: 'Tipo de Roda', type: 'select', key: 'roda', values: ['Asfalto', 'Premium', 'Drift'] },
       { name: 'Tipo de Tração', type: 'select', key: 'tracao', values: ['Dianteira', 'Traseira', '4x4'] },
     ]
@@ -34,172 +33,196 @@ const customizationOptions = [
   {
     title: 'Interior e Iluminação',
     options: [
-  
       { name: 'Material dos Bancos', type: 'select', key: 'materialInterno', values: ['Couro', 'Tecido', 'Alcântara'] },
       { name: 'Tecnologia dos Faróis', type: 'select', key: 'iluminacao', values: ['LED', 'OLED', 'Neon', 'Xenon', 'Laser'] },
     ]
   },
 ];
 
+// <<< 1. MAPA DE OPÇÕES PERMITIDAS POR BLOCO
+const blockConfig = {
+  1: ['combustivel', 'cambio', 'corExterna', 'roda'],
+  2: ['combustivel', 'cambio', 'corExterna', 'roda', 'acabamentoCor', 'tracao', 'aerofolio'],
+  // bloco 3 (ou maior) mostra todas as opções
+};
 
 const Personalizacao = () => {
-    const { carId } = useParams();
-    const navigate = useNavigate();
+  const { carId } = useParams();
+  const navigate = useNavigate();
 
-    const [car, setCar] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selections, setSelections] = useState({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  const [car, setCar] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selections, setSelections] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        const fetchCarData = async () => {
-            try {
-                const response = await fetch(`http://localhost:3001/api/carros/${carId}`);
-                if (!response.ok) throw new Error('Não foi possível encontrar o carro solicitado.');
-                const data = await response.json();
-                setCar(data);
-                initializeSelections(); 
-            } catch (err) {
-                console.error("Falha ao buscar detalhes do carro:", err);
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
+  // Busca o carro
+  useEffect(() => {
+    const fetchCarData = async () => {
+      try {
+        const response = await fetch(`http://localhost:3001/api/carros/${carId}`);
+        if (!response.ok) throw new Error('Não foi possível encontrar o carro solicitado.');
+        const data = await response.json();
+        setCar(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        fetchCarData();
-    }, [carId]);
+    fetchCarData();
+  }, [carId]);
 
-    const initializeSelections = () => {
-        const initialSelections = {};
-        customizationOptions.forEach(section => {
-            section.options.forEach(option => {
-                if (!option.key) return;
+  // <<< 2. FILTRAGEM POR BLOCO
+  const optionsParaExibir = React.useMemo(() => {
+    if (!car) return [];
+    if (car.num_blocos >= 3 || !blockConfig[car.num_blocos]) {
+      return customizationOptions;
+    }
 
-                if (option.type === 'select') {
-                    
-                    initialSelections[option.key] = option.values[0];
-                } else if (option.type === 'toggle') {
-                    initialSelections[option.key] = false;
-                } else if (option.type === 'color') {
-                    
-                    initialSelections[option.key] = option.items[0].value;
-                }
-            });
+    const allowedKeys = blockConfig[car.num_blocos];
+
+    return customizationOptions.map(section => {
+      const filteredOptions = section.options.filter(option => allowedKeys.includes(option.key));
+      if (filteredOptions.length > 0) {
+        return { ...section, options: filteredOptions };
+      }
+      return null;
+    }).filter(Boolean);
+  }, [car]);
+
+  // <<< 3. INICIALIZA SELEÇÕES BASEADAS NAS OPÇÕES FILTRADAS
+  useEffect(() => {
+    if (optionsParaExibir.length > 0) {
+      const initialSelections = {};
+      optionsParaExibir.forEach(section => {
+        section.options.forEach(option => {
+          if (!option.key) return;
+
+          if (option.type === 'select') {
+            initialSelections[option.key] = option.values[0];
+          } else if (option.type === 'toggle') {
+            initialSelections[option.key] = false;
+          } else if (option.type === 'color') {
+            initialSelections[option.key] = option.items[0].value;
+          }
         });
-        setSelections(initialSelections);
+      });
+      setSelections(initialSelections);
+    }
+  }, [optionsParaExibir]);
+
+  // Manipula seleção
+  const handleSelect = (key, value) => {
+    setSelections(prev => ({ ...prev, [key]: value }));
+  };
+
+  // Finaliza pedido
+  const handleFinalizar = async () => {
+    setIsSubmitting(true);
+    setError(null);
+
+    const pedidoData = {
+      carroId: car.id,
+      personalizacoes: selections,
+      valor: 250000.00
     };
 
-    const handleSelect = (key, value) => {
-        setSelections(prev => ({ ...prev, [key]: value }));
-    };
+    try {
+      const response = await fetch('http://localhost:3001/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pedidoData),
+      });
 
-    const handleFinalizar = async () => {
-        setIsSubmitting(true);
-        setError(null);
+      if (!response.ok) throw new Error('Falha ao criar o pedido no servidor.');
 
-        const pedidoData = {
-            carroId: car.id,
-            personalizacoes: selections,
-            valor: 250000.00
-        };
+      navigate('/perfil#pedidos');
+    } catch (err) {
+      setError("Não foi possível salvar seu pedido. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-        try {
-            const response = await fetch('http://localhost:3001/api/pedidos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(pedidoData),
-            });
+  if (loading) return <div className="status-page">Carregando personalizador...</div>;
+  if (error) return <div className="status-page error">{error}</div>;
+  if (!car) return <div className="status-page">Carro não encontrado.</div>;
 
-            if (!response.ok) {
-                throw new Error('Falha ao criar o pedido no servidor.');
-            }
-            navigate('/perfil#pedidos');
-        } catch (err) {
-            console.error("Erro ao finalizar o pedido:", err);
-            setError("Não foi possível salvar seu pedido. Tente novamente.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-    
-    if (loading) return <div className="status-page">Carregando personalizador...</div>;
-    if (error) return <div className="status-page error">{error}</div>;
-    if (!car) return <div className="status-page">Carro não encontrado.</div>;
-
-    return (
-        <div className="personalizacao-container">
-            <section className="car-showcase">
-                <span className="logo">AUTOMOD</span>
-                <div className="car-info">
-                    <h1>{car.nome}</h1>
-                    <img src={car.image} alt={car.nome} className="car-image" />
-                </div>
-            </section>
-
-            <aside className="options-panel">
-                <div className="panel-header">
-                    <h2>Personalização</h2>
-                    <button 
-                        className="finish-button"
-                        onClick={handleFinalizar}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? 'Salvando...' : 'Finalizar Pedido'}
-                    </button>
-                </div>
-                
-                {customizationOptions.map((section, sectionIndex) => (
-                    <div key={sectionIndex} className="option-section">
-                        <h3>{section.title}</h3>
-                        {section.options.map((option, optionIndex) => (
-                            <div key={option.key || optionIndex} className="option-item">
-                                <h4>{option.name}</h4>
-                                
-                                
-                                {option.type === 'select' && (
-                                    <div className="select-group">
-                                        {option.values.map((value) => (
-                                            <button 
-                                                key={value}
-                                                className={`select-button ${selections[option.key] === value ? 'active' : ''}`}
-                                                onClick={() => handleSelect(option.key, value)}
-                                            >{value}</button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                
-                                {option.type === 'color' && (
-                                    <div className="option-grid">
-                                        {option.items.map((item) => (
-                                            <div 
-                                                key={item.value}
-                                                className={`option-swatch color-swatch ${selections[option.key] === item.value ? 'selected' : ''}`}
-                                                style={{ background: item.value }}
-                                                onClick={() => handleSelect(option.key, item.value)}
-                                            ></div>
-                                        ))}
-                                    </div>
-                                )}
-                                
-                                {/* Renderiza Botão (Toggle) */}
-                                {option.type === 'toggle' && (
-                                    <button 
-                                        className={`toggle-button ${selections[option.key] ? 'active' : ''}`}
-                                        onClick={() => handleSelect(option.key, !selections[option.key])}
-                                    >
-                                        {selections[option.key] ? 'Sim' : 'Não'}
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                ))}
-            </aside>
+  return (
+    <div className="personalizacao-container">
+      <section className="car-showcase">
+        <div className="car-info">
+          <h1>{car.nome}</h1>
+          <img src={car.image} alt={car.nome} className="car-image" />
+         
         </div>
-    );
+      </section>
+
+      <aside className="options-panel">
+        <div className="panel-header">
+          <h2>Personalização</h2>
+          <button 
+            className="finish-button"
+            onClick={handleFinalizar}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Salvando...' : 'Finalizar Pedido'}
+          </button>
+        </div>
+
+        {/* <<< 4. RENDERIZAÇÃO FILTRADA */}
+        {optionsParaExibir.map((section, sectionIndex) => (
+          <div key={sectionIndex} className="option-section">
+            <h3>{section.title}</h3>
+            {section.options.map((option, optionIndex) => (
+              <div key={option.key || optionIndex} className="option-item">
+                <h4>{option.name}</h4>
+
+                {/* Select */}
+                {option.type === 'select' && (
+                  <div className="select-group">
+                    {option.values.map((value) => (
+                      <button 
+                        key={value}
+                        className={`select-button ${selections[option.key] === value ? 'active' : ''}`}
+                        onClick={() => handleSelect(option.key, value)}
+                      >{value}</button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Color */}
+                {option.type === 'color' && (
+                  <div className="option-grid">
+                    {option.items.map((item) => (
+                      <div 
+                        key={item.value}
+                        className={`option-swatch color-swatch ${selections[option.key] === item.value ? 'selected' : ''}`}
+                        style={{ background: item.value }}
+                        onClick={() => handleSelect(option.key, item.value)}
+                      ></div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Toggle */}
+                {option.type === 'toggle' && (
+                  <button 
+                    className={`toggle-button ${selections[option.key] ? 'active' : ''}`}
+                    onClick={() => handleSelect(option.key, !selections[option.key])}
+                  >
+                    {selections[option.key] ? 'Sim' : 'Não'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+      </aside> 
+    </div>
+  );
 };
 
 export default Personalizacao;

@@ -3,7 +3,7 @@
 :root {
   --primary-color: #000000;
   --secondary-color: #ffffff;
-  --accent-color: #FFD700;
+   --accent-color: #FFD700;
   --background-color: #f8f9fa;
   --panel-background: #ffffff;
   --text-color: #333;
@@ -14,7 +14,10 @@
 .personalizacao-container {
   display: flex;
   font-family: 'Poppins', sans-serif;
-  min-height: 100vh;
+  /* <<< ALTERAÇÃO 1: De 'min-height' para 'height' e adicionado 'overflow' >>> */
+  /* Isso "trava" o container na altura da tela e previne a barra de rolagem principal. */
+  height: 100vh;
+  overflow: hidden; 
   background-color: var(--background-color);
 }
 
@@ -38,9 +41,9 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  position: relative;
+  /* <<< ALTERAÇÃO 2: Removido 'position: sticky' e 'height: 100vh' >>> */
+  /* Agora o flexbox vai controlar a altura dele para ser 100% do container. */
 }
 
 .logo {
@@ -63,6 +66,15 @@
   object-fit: contain;
 }
 
+/* Adicionado para mostrar o número do bloco */
+.bloco-info {
+    position: absolute;
+    bottom: 40px;
+    font-size: 1rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
 /* Painel da Direita (Opções) */
 .options-panel {
   flex: 2;
@@ -72,6 +84,9 @@
   padding: 40px;
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
   border-left: 1px solid var(--border-color);
+  /* <<< ALTERAÇÃO 3: 'overflow-y: auto' continua aqui e agora funciona como esperado >>> */
+  /* A barra de rolagem só vai aparecer DENTRO deste painel se o conteúdo for muito grande. */
+  overflow-y: auto;
 }
 
 .panel-header {
@@ -83,6 +98,7 @@
   margin-bottom: 2rem;
 }
 
+/* ... (o resto do seu CSS continua igual) ... */
 .panel-header h2 {
   font-size: 2rem;
   font-weight: 600;
@@ -97,11 +113,17 @@
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 
 .finish-button:hover {
   background-color: #0056b3;
+}
+
+.finish-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .option-section {
@@ -126,7 +148,6 @@
   margin-bottom: 0.75rem;
 }
 
-/* Estilos dos Controles */
 .option-grid {
   display: flex;
   flex-wrap: wrap;
@@ -150,14 +171,6 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-}
-
-.image-swatch {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  background-size: cover;
-  background-position: center;
 }
 
 .toggle-button {
