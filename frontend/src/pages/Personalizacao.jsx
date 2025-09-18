@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './Personalizacao.css';
 
-// A estrutura de TODAS as opções possíveis continua igual
+// A estrutura de TODAS as opções possíveis
 const customizationOptions = [
   {
     title: 'Motor e Transmissão',
@@ -39,11 +39,10 @@ const customizationOptions = [
   },
 ];
 
-// <<< 1. MAPA DE OPÇÕES PERMITIDAS POR BLOCO
+// MAPA DE OPÇÕES PERMITIDAS POR BLOCO
 const blockConfig = {
   1: ['combustivel', 'cambio', 'corExterna', 'roda'],
   2: ['combustivel', 'cambio', 'corExterna', 'roda', 'acabamentoCor', 'tracao', 'aerofolio'],
-  // bloco 3 (ou maior) mostra todas as opções
 };
 
 const Personalizacao = () => {
@@ -56,7 +55,7 @@ const Personalizacao = () => {
   const [selections, setSelections] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Busca o carro
+  // Busca os dados do carro
   useEffect(() => {
     const fetchCarData = async () => {
       try {
@@ -70,55 +69,43 @@ const Personalizacao = () => {
         setLoading(false);
       }
     };
-
     fetchCarData();
   }, [carId]);
 
-  // <<< 2. FILTRAGEM POR BLOCO
+  // Filtra as opções com base no num_blocos do carro
   const optionsParaExibir = React.useMemo(() => {
     if (!car) return [];
     if (car.num_blocos >= 3 || !blockConfig[car.num_blocos]) {
       return customizationOptions;
     }
-
     const allowedKeys = blockConfig[car.num_blocos];
-
     return customizationOptions.map(section => {
       const filteredOptions = section.options.filter(option => allowedKeys.includes(option.key));
-      if (filteredOptions.length > 0) {
-        return { ...section, options: filteredOptions };
-      }
-      return null;
+      return filteredOptions.length > 0 ? { ...section, options: filteredOptions } : null;
     }).filter(Boolean);
   }, [car]);
 
-  // <<< 3. INICIALIZA SELEÇÕES BASEADAS NAS OPÇÕES FILTRADAS
+  // Inicializa as seleções padrão para as opções exibidas
   useEffect(() => {
     if (optionsParaExibir.length > 0) {
       const initialSelections = {};
       optionsParaExibir.forEach(section => {
         section.options.forEach(option => {
           if (!option.key) return;
-
-          if (option.type === 'select') {
-            initialSelections[option.key] = option.values[0];
-          } else if (option.type === 'toggle') {
-            initialSelections[option.key] = false;
-          } else if (option.type === 'color') {
-            initialSelections[option.key] = option.items[0].value;
-          }
+          if (option.type === 'select') initialSelections[option.key] = option.values[0];
+          else if (option.type === 'toggle') initialSelections[option.key] = false;
+          else if (option.type === 'color') initialSelections[option.key] = option.items[0].value;
         });
       });
       setSelections(initialSelections);
     }
   }, [optionsParaExibir]);
 
-  // Manipula seleção
   const handleSelect = (key, value) => {
     setSelections(prev => ({ ...prev, [key]: value }));
   };
 
-  // Finaliza pedido
+  // <<< NOVA FUNÇÃO handleFinalizar COM FLUXO DIRETO >>>
   const handleFinalizar = async () => {
     setIsSubmitting(true);
     setError(null);
@@ -130,17 +117,41 @@ const Personalizacao = () => {
     };
 
     try {
-      const response = await fetch('http://localhost:3001/api/pedidos', {
+      // --- ETAPA 1: Salvar o pedido no nosso banco de dados ---
+      console.log("Etapa 1: Salvando pedido no banco de dados...");
+      const responsePedido = await fetch('http://localhost:3001/api/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pedidoData),
       });
 
-      if (!response.ok) throw new Error('Falha ao criar o pedido no servidor.');
+      if (!responsePedido.ok) throw new Error('Falha ao salvar o pedido inicial.');
+      
+      const novoPedido = await responsePedido.json();
+      const novoPedidoId = novoPedido.id;
+      
+      if (!novoPedidoId) throw new Error('O servidor não retornou um ID para o novo pedido.');
+      console.log(`Pedido salvo com sucesso! ID: ${novoPedidoId}`);
 
-      navigate('/perfil#pedidos');
+      // --- ETAPA 2: Enviar o novo pedido para a produção na máquina ---
+      console.log(`Etapa 2: Enviando pedido ${novoPedidoId} para a produção...`);
+      const responseProducao = await fetch(`http://localhost:3001/api/pedidos/${novoPedidoId}/produzir`, {
+        method: 'POST',
+      });
+
+      if (!responseProducao.ok) {
+        // Se esta etapa falhar, o pedido foi criado mas não enviado.
+        throw new Error('Pedido criado, mas falhou ao enviar para a produção. Contate o suporte.');
+      }
+      
+      console.log('Pedido enviado para a máquina com sucesso!');
+      
+      // --- SUCESSO TOTAL: Navega para a página de perfil ---
+      navigate('/perfil');
+
     } catch (err) {
-      setError("Não foi possível salvar seu pedido. Tente novamente.");
+      console.error("Erro no processo de finalização:", err);
+      setError(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -156,7 +167,6 @@ const Personalizacao = () => {
         <div className="car-info">
           <h1>{car.nome}</h1>
           <img src={car.image} alt={car.nome} className="car-image" />
-         
         </div>
       </section>
 
@@ -168,19 +178,16 @@ const Personalizacao = () => {
             onClick={handleFinalizar}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Salvando...' : 'Finalizar Pedido'}
+            {isSubmitting ? 'Enviando para Produção...' : 'Finalizar e Produzir'}
           </button>
         </div>
 
-        {/* <<< 4. RENDERIZAÇÃO FILTRADA */}
         {optionsParaExibir.map((section, sectionIndex) => (
           <div key={sectionIndex} className="option-section">
             <h3>{section.title}</h3>
             {section.options.map((option, optionIndex) => (
               <div key={option.key || optionIndex} className="option-item">
                 <h4>{option.name}</h4>
-
-                {/* Select */}
                 {option.type === 'select' && (
                   <div className="select-group">
                     {option.values.map((value) => (
@@ -192,8 +199,6 @@ const Personalizacao = () => {
                     ))}
                   </div>
                 )}
-
-                {/* Color */}
                 {option.type === 'color' && (
                   <div className="option-grid">
                     {option.items.map((item) => (
@@ -206,8 +211,6 @@ const Personalizacao = () => {
                     ))}
                   </div>
                 )}
-
-                {/* Toggle */}
                 {option.type === 'toggle' && (
                   <button 
                     className={`toggle-button ${selections[option.key] ? 'active' : ''}`}
