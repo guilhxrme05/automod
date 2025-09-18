@@ -1,10 +1,11 @@
 
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config(); 
-
+const axios = require('axios'); 
+require('dotenv').config();
 
 const db = require('./config/db');
+const mapeamentos = require('./mapeamentos'); 
 
 
 const app = express();
@@ -15,9 +16,9 @@ app.use(cors());
 app.use(express.json());
 
 
+
 function converterParaFormatoCaixa(personalizacoes, carro) {
     const p = personalizacoes;
-
 
     const blocoConfig = {
         cor: mapeamentos.corDoBloco[p.combustivel] || 1,
@@ -25,29 +26,23 @@ function converterParaFormatoCaixa(personalizacoes, carro) {
         padrao1: "0", padrao2: "0", padrao3: "0",
     };
 
-    // Aplica as regras corretas com base na CATEGORIA do carro
     switch (carro.categoria) {
         case 'Popular':
-            blocoConfig.lamina1 = mapeamentos.coresDasPlacas[p.corExterna] || 0; // Frente = Cor do Carro
-            blocoConfig.lamina2 = mapeamentos.cambio[p.cambio] || 0;             // Direita = Câmbio
-            // Esquerda = Tipo de Roda (Cor não importa, então fica 0)
+            blocoConfig.lamina1 = mapeamentos.coresGerais[p.corExterna] || 0;
+            blocoConfig.lamina2 = mapeamentos.cambio[p.cambio] || 0;
             break;
-
         case 'Esportivo':
-            blocoConfig.lamina1 = mapeamentos.coresDasPlacas[p.tracao] || 0;      // Frente = Tipo de Tração
-            blocoConfig.lamina2 = mapeamentos.coresDasPlacas[p.acabamentoCor] || 0; // Direita = Acabamento
-            // Esquerda = Aerofólio (Cor não importa, mas podemos indicar presença com uma cor padrão)
-            blocoConfig.lamina3 = p.aerofolio ? 5 : 0; // Ex: Lâmina preta se tiver aerofólio
+            blocoConfig.lamina1 = mapeamentos.coresGerais[p.tracao] || 0;
+            blocoConfig.lamina2 = mapeamentos.coresGerais[p.acabamentoCor] || 0;
+            blocoConfig.lamina3 = p.aerofolio ? 5 : 0;
             break;
-
         case 'Luxo':
-            blocoConfig.lamina1 = mapeamentos.coresDasPlacas[p.materialInterno] || 0; // Frente = Tipo de Interior
-            blocoConfig.lamina2 = mapeamentos.coresDasPlacas[p.iluminacao] || 0;      // Direita = Faróis
-            blocoConfig.lamina3 = mapeamentos.coresDasPlacas[p.materialInterno] || 0; // Esquerda = Material dos Bancos
+            blocoConfig.lamina1 = mapeamentos.coresGerais[p.materialInterno] || 0;
+            blocoConfig.lamina2 = mapeamentos.coresGerais[p.iluminacao] || 0;
+            blocoConfig.lamina3 = mapeamentos.coresGerais[p.materialInterno] || 0;
             break;
     }
 
-    // objeto caixa final
     const caixa = { codigoProduto: carro.num_blocos };
     if (carro.num_blocos >= 1) caixa.bloco1 = blocoConfig;
     if (carro.num_blocos >= 2) caixa.bloco2 = { ...blocoConfig };
@@ -58,65 +53,36 @@ function converterParaFormatoCaixa(personalizacoes, carro) {
 }
 
 
-// teste
+
+// rota teste
 app.get('/', async (req, res) => {
-  try {
-    const resultado = await db.query('SELECT NOW()');
-    res.json({
-      mensagem: '🚀 API a funcionar e ligada ao PostgreSQL!',
-      horaDoBanco: resultado.rows[0].now,
-    });
-  } catch (err) {
-    console.error('Erro ao conectar-se à base de dados:', err);
-    res.status(500).json({ erro: 'Falha ao ligar à base de dados.' });
-  }
+    res.json({ mensagem: '🚀 API Automod a funcionar!' });
 });
 
-// rota buscar carros
+// buscar carros
 app.get('/api/carros', async (req, res) => {
     try {
         const query = `
-            SELECT
-                carros.id,
-                carros.nome,
-                categorias.nome AS categoria,
-                carros.imagem_catalogo_url AS image
-            FROM
-                carros
-            JOIN
-                categorias ON carros.categoria_id = categorias.id;
+            SELECT c.id, c.nome, cat.nome AS categoria, c.imagem_catalogo_url AS image
+            FROM carros c
+            JOIN categorias cat ON c.categoria_id = cat.id;
         `;
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
-        console.error('----------------------------------');
-        console.error('🛑 ERRO AO EXECUTAR A CONSULTA SQL:');
-        console.error('----------------------------------');
-        console.error('Consulta SQL:', err.query);
-        console.error('Erro Detalhado:', err.stack);
-        console.error('----------------------------------');
         res.status(500).json({ erro: 'Não foi possível buscar os carros.' });
     }
 });
 
-
-// rota buscar carro pelo id pra personalizar
+// buscar carro por ID
 app.get('/api/carros/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const query = `
-            SELECT
-                carros.id,
-                carros.nome,
-                categorias.nome AS categoria,
-                carros.imagem_personalizacao_url AS image,
-                carros.num_blocos -- <<< ADICIONE ESTA LINHA
-            FROM
-                carros
-            JOIN
-                categorias ON carros.categoria_id = categorias.id
-            WHERE
-                carros.id = $1;
+            SELECT c.id, c.nome, cat.nome AS categoria, c.imagem_personalizacao_url AS image, c.num_blocos
+            FROM carros c
+            JOIN categorias cat ON c.categoria_id = cat.id
+            WHERE c.id = $1;
         `;
         const resultado = await db.query(query, [id]);
         if (resultado.rows.length > 0) {
@@ -125,50 +91,36 @@ app.get('/api/carros/:id', async (req, res) => {
             res.status(404).json({ erro: 'Carro não encontrado.' });
         }
     } catch (err) {
-        console.error('🛑 ERRO AO EXECUTAR A CONSULTA SQL (BUSCA POR ID):', err.stack);
         res.status(500).json({ erro: 'Não foi possível buscar o carro solicitado.' });
     }
 });
 
-// rota pra buscar pedidos
+// buscar pedidos
 app.get('/api/pedidos', async (req, res) => {
-  try {
-    const query = `
-        SELECT
-            pedidos.id,
-            carros.nome AS carro_nome,
-            pedidos.criado_em,
-            pedidos.status,
-            pedidos.valor
-        FROM
-            pedidos
-        JOIN
-            carros ON pedidos.carro_id = carros.id
-        ORDER BY
-            pedidos.criado_em DESC;
-    `;
-    const resultado = await db.query(query);
-    res.json(resultado.rows);
-  } catch (err) {
-    console.error('🛑 ERRO AO BUSCAR OS PEDIDOS:', err.stack);
-    res.status(500).json({ erro: 'Não foi possível buscar os pedidos.' });
-  }
+    try {
+        const query = `
+            SELECT p.id, c.nome AS carro_nome, p.criado_em, p.status, p.valor
+            FROM pedidos p
+            JOIN carros c ON p.carro_id = c.id
+            ORDER BY p.criado_em DESC;
+        `;
+        const resultado = await db.query(query);
+        res.json(resultado.rows);
+    } catch (err) {
+        res.status(500).json({ erro: 'Não foi possível buscar os pedidos.' });
+    }
 });
 
-
-
-// rota criar pedido
+// criar novo pedido
 app.post('/api/pedidos', async (req, res) => {
     const { carroId, personalizacoes, valor } = req.body;
-
     if (!carroId || !personalizacoes || !valor) {
         return res.status(400).json({ erro: 'Dados do pedido incompletos.' });
     }
-
     try {
         const query = `
             INSERT INTO pedidos (carro_id, personalizacoes, valor, status)
-            VALUES ($1, $2, $3, 'Em Produção')
+            VALUES ($1, $2, $3, 'No carrinho')
             RETURNING *;
         `;
         const resultado = await db.query(query, [carroId, personalizacoes, valor]);
@@ -179,11 +131,10 @@ app.post('/api/pedidos', async (req, res) => {
     }
 });
 
-// rota enviar pedido maquina
+// enviar pedido para a maquina
 app.post('/api/pedidos/:id/produzir', async (req, res) => {
     const { id } = req.params;
     try {
-        // Buscar o pedido E a categoria do carro
         const resultadoPedido = await db.query(
             `SELECT p.id, p.personalizacoes, c.num_blocos, c.id as carro_id, cat.nome as categoria 
              FROM pedidos p 
@@ -211,15 +162,15 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
 
         await db.query("UPDATE pedidos SET status = 'Enviado para produção', middleware_job_id = $1 WHERE id = $2", [jobId, id]);
 
+        console.log('✅ Pedido enviado com sucesso! ID da Máquina (jobId):', jobId);
         res.json({ mensagem: 'Pedido enviado para a fila de produção com sucesso!', jobId: jobId });
     } catch (err) {
-        console.error(' ERRO AO ENVIAR PARA A FILA DE PRODUÇÃO:', err.response ? err.response.data : err.message);
+        console.error('🛑 ERRO AO ENVIAR PARA A FILA DE PRODUÇÃO:', err.response ? err.response.data : err.message);
         res.status(500).json({ erro: 'Não foi possível enviar o pedido para a produção.' });
     }
 });
 
-
-
 app.listen(PORTA, () => {
-  console.log(`✅ Servidor a rodar em http://localhost:${PORTA}`);
+    console.log(`✅ Servidor a rodar em http://localhost:${PORTA}`);
 });
+
