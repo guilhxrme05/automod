@@ -1,24 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+/* ---
+  ESTILO AUTOMOD v3.2 - Configurador
+  Identidade: Imersiva, Tecnológica, Foco no Produto
+--- */
 
+/* --- 1. VARIÁVEIS E FONTES --- */
 :root {
-  --primary-color: #000000;
-  --secondary-color: #ffffff;
-   --accent-color: #FFD700;
-  --background-color: #f8f9fa;
-  --panel-background: #ffffff;
-  --text-color: #333;
-  --text-light: #6c757d;
-  --border-color: #dee2e6;
+  --cor-fundo-profundo: #0A0A0C;
+  --cor-fundo-painel: #141418;
+  --cor-amarelo-destaque: #FFD700;
+  --cor-amarelo-brilho: rgba(255, 215, 0, 0.1);
+  --cor-texto-principal: #F5F5F7;
+  --cor-texto-secundario: #A1A1A6;
+  --cor-borda-sutil: #2A2A2E;
+  --cor-borda-brilho: rgba(255, 215, 0, 0.5);
 }
 
+/* Duas fontes: Poppins para a UI, Playfair para detalhes elegantes */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* --- 2. LAYOUT PRINCIPAL E STATUS --- */
 .personalizacao-container {
   display: flex;
   font-family: 'Poppins', sans-serif;
-  /* <<< ALTERAÇÃO 1: De 'min-height' para 'height' e adicionado 'overflow' >>> */
-  /* Isso "trava" o container na altura da tela e previne a barra de rolagem principal. */
   height: 100vh;
-  overflow: hidden; 
-  background-color: var(--background-color);
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--cor-fundo-profundo);
+  color: var(--cor-texto-principal);
 }
 
 .status-page {
@@ -27,190 +35,161 @@
   align-items: center;
   height: 100vh;
   font-size: 1.5rem;
-}
-.status-page.error {
-  color: #dc3545;
+  background-color: var(--cor-fundo-profundo);
 }
 
-/* Painel da Esquerda (Showcase) */
+/* --- 3. PAINEL DO CARRO (SHOWCASE) --- */
 .car-showcase {
   flex: 3;
-  padding: 40px;
+  padding: 2rem;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
-  position: relative;
-  /* <<< ALTERAÇÃO 2: Removido 'position: sticky' e 'height: 100vh' >>> */
-  /* Agora o flexbox vai controlar a altura dele para ser 100% do container. */
+  justify-content: center;
+  flex-direction: column; /* Alinha os itens verticalmente */
 }
 
-.logo {
-  position: absolute;
-  top: 40px;
-  left: 40px;
-  font-weight: 700;
-  font-size: 1.2rem;
+.car-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 800px;
 }
 
 .car-info h1 {
-  font-size: 2.8rem;
+  font-size: 3.5rem;
+  font-weight: 700;
   margin-bottom: 2rem;
-  font-weight: 600;
+  letter-spacing: -1.5px;
 }
 
 .car-image {
-  max-width: 90%;
+  width: 100%;
   height: auto;
   object-fit: contain;
+  filter: drop-shadow(0 30px 20px rgba(0,0,0,0.4));
+  transition: transform 0.5s ease;
+  margin-bottom: 2.5rem; /* Aumenta o espaço para a descrição */
 }
 
-/* Adicionado para mostrar o número do bloco */
-.bloco-info {
-    position: absolute;
-    bottom: 40px;
-    font-size: 1rem;
-    color: var(--text-light);
-    font-weight: 500;
+.car-image:hover {
+  transform: scale(1.05);
 }
 
-/* Painel da Direita (Opções) */
+/* <<< ESTILO PARA A DESCRIÇÃO DO CARRO >>> */
+.car-description {
+  font-family: 'Playfair Display', serif; /* Fonte chique */
+  font-style: italic;
+  font-size: 1.3rem; /* Um pouco maior */
+  line-height: 1.7;
+  color: var(--cor-texto-secundario);
+  max-width: 75%;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Adiciona as aspas estilizadas */
+.car-description::before,
+.car-description::after {
+  content: '"';
+  font-size: 3rem;
+  color: var(--cor-amarelo-destaque);
+  opacity: 0.3;
+  position: absolute;
+}
+
+.car-description::before {
+  top: -1.5rem;
+  left: -2.5rem;
+}
+
+.car-description::after {
+  bottom: -2.5rem;
+  right: -2.5rem;
+}
+
+/* --- 4. PAINEL DE OPÇÕES (DIREITA) --- */
 .options-panel {
   flex: 2;
-  min-width: 480px;
-  max-width: 480px;
-  background-color: var(--panel-background);
-  padding: 40px;
-  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
-  border-left: 1px solid var(--border-color);
-  /* <<< ALTERAÇÃO 3: 'overflow-y: auto' continua aqui e agora funciona como esperado >>> */
-  /* A barra de rolagem só vai aparecer DENTRO deste painel se o conteúdo for muito grande. */
-  overflow-y: auto;
+  min-width: 500px;
+  max-width: 500px;
+  background-color: var(--cor-fundo-painel);
+  box-shadow: -15px 0 40px rgba(0, 0, 0, 0.3);
+  border-left: 1px solid var(--cor-borda-sutil);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
+/* <<< ALTERAÇÃO AQUI >>> */
 .panel-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 1rem;
-  margin-bottom: 2rem;
+  flex-direction: column; /* Coloca os itens em coluna (um em cima do outro) */
+  align-items: flex-start; /* Alinha os itens à esquerda */
+  gap: 1.5rem;             /* Adiciona um espaço entre o título e o botão */
+  padding: 3rem 3rem 0 3rem;
+  border-bottom: 1px solid var(--cor-borda-sutil);
+  padding-bottom: 1.5rem;
 }
 
-/* ... (o resto do seu CSS continua igual) ... */
 .panel-header h2 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 600;
 }
 
+.options-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 2.5rem 3rem;
+}
+
+/* Scrollbar estilizada */
+.options-list::-webkit-scrollbar { width: 8px; }
+.options-list::-webkit-scrollbar-track { background: var(--cor-fundo-painel); }
+.options-list::-webkit-scrollbar-thumb { background-color: var(--cor-borda-sutil); border-radius: 4px; }
+
+/* <<< BOTÃO NO HEADER >>> */
 .finish-button {
-  background-color: var(--accent-color);
-  color: white;
+  background-color: var(--cor-amarelo-destaque);
+  color: var(--cor-fundo-profundo);
   border: none;
   border-radius: 8px;
-  padding: 0.8rem 1.5rem;
+  padding: 0.9rem 2rem;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
 }
 
 .finish-button:hover {
-  background-color: #0056b3;
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
 }
 
 .finish-button:disabled {
-  background-color: #6c757d;
+  background-color: var(--cor-texto-secundario);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.5;
+  box-shadow: none;
 }
 
-.option-section {
-  margin-bottom: 2.5rem;
-}
+/* O resto dos estilos para as opções continua o mesmo */
+.option-section { margin-bottom: 3rem; }
+.option-section:last-child { margin-bottom: 0; }
+.option-section h3 { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--cor-texto-secundario); margin-bottom: 1.5rem; border-bottom: 1px solid var(--cor-borda-sutil); padding-bottom: 0.75rem; }
+.option-item { margin-bottom: 2rem; }
+.option-item h4 { font-size: 1.1rem; font-weight: 500; color: var(--cor-texto-principal); margin-bottom: 1rem; }
+.select-group { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.select-button { flex-grow: 1; padding: 0.8rem 1.2rem; border-radius: 6px; border: 1px solid var(--cor-borda-sutil); background-color: transparent; color: var(--cor-texto-secundario); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+.select-button:hover { background-color: var(--cor-fundo-profundo); color: var(--cor-texto-principal); }
+.select-button.active { background-color: var(--cor-fundo-profundo); color: var(--cor-amarelo-destaque); border-color: var(--cor-amarelo-destaque); box-shadow: 0 0 15px var(--cor-amarelo-brilho); }
+.option-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+.color-swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid var(--cor-fundo-painel); transition: all 0.2s ease; }
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.selected { border-color: var(--cor-amarelo-destaque); box-shadow: 0 0 0 2px var(--cor-amarelo-destaque); }
+.toggle-button { width: 100%; padding: 1rem; border-radius: 6px; border: 1px solid var(--cor-borda-sutil); background-color: transparent; color: var(--cor-texto-secundario); font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; text-align: center; }
+.toggle-button.active { background-color: var(--cor-fundo-profundo); color: var(--cor-amarelo-destaque); border-color: var(--cor-amarelo-destaque); box-shadow: 0 0 15px var(--cor-amarelo-brilho); }
 
-.option-section h3 {
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: var(--text-color);
-  margin-bottom: 1.5rem;
-}
-
-.option-item {
-  margin-bottom: 1.5rem;
-}
-
-.option-item h4 {
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: var(--text-light);
-  margin-bottom: 0.75rem;
-}
-
-.option-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.option-swatch {
-  cursor: pointer;
-  border: 2px solid var(--border-color);
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
-.option-swatch:hover {
-  transform: scale(1.1);
-}
-.option-swatch.selected {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px var(--accent-color);
-}
-
-.color-swatch {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-.toggle-button {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background-color: #f8f9fa;
-  color: var(--text-light);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.toggle-button.active {
-  background-color: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-  font-weight: 500;
-}
-
-.select-group {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.select-button {
-  flex-grow: 1;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background-color: #f8f9fa;
-  color: var(--text-light);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.select-button.active {
-  background-color: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-  font-weight: 500;
-}

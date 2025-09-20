@@ -10,7 +10,7 @@ const Register = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Aqui viria lógica para enviar os dados para a API
+    
     console.log('Dados de Registro:', { email, name, password });
   };
 

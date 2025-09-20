@@ -1,8 +1,21 @@
+/* ---
+  ESTILO AUTOMOD v3.0 - Performance & Identity
+  Identidade: Tecnológica, Foco em Detalhes, Sofisticada
+--- */
 
+/* --- 1. VARIÁVEIS E CONFIGURAÇÃO GLOBAL --- */
+:root {
+  --cor-fundo-profundo: #0A0A0C;
+  --cor-fundo-painel: #141418;
+  --cor-amarelo-destaque: #FFD700; /* Um amarelo mais dourado/rico */
+  --cor-amarelo-brilho: rgba(255, 215, 0, 0.15);
+  --cor-texto-principal: #F5F5F7;
+  --cor-texto-secundario: #A1A1A6;
+  --cor-borda-sutil: #2A2A2E;
+  --cor-borda-brilho: rgba(255, 215, 0, 0.5);
+}
 
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 * {
   box-sizing: border-box;
@@ -12,196 +25,246 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  background-color: #121212;
-  color: #e0e0e0;
+  background-color: var(--cor-fundo-profundo);
+  color: var(--cor-texto-principal);
+  overflow-x: hidden; /* Previne scroll horizontal */
 }
 
+/* --- 2. CABEÇALHO E TÍTULOS --- */
 .catalog-container {
   width: 100%;
   min-height: 100vh;
-  padding: 3rem 5%;
-  background: linear-gradient(145deg, #1e1e1e 0%, #121212 100%);
+  padding: 5rem 6%;
+  background: var(--cor-fundo-profundo);
 }
-
 
 .catalog-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 5rem;
 }
 
 .catalog-header h1 {
-  font-size: 2.8rem;
+  font-size: 4rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
-  letter-spacing: -1px;
+  margin-bottom: 1.5rem;
+  letter-spacing: -2px;
+  color: var(--cor-texto-principal);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Adicionamos uma "faísca" amarela no título para dar identidade */
+.catalog-header h1::after {
+  content: '_';
+  color: var(--cor-amarelo-destaque);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
 }
 
 .catalog-header p {
-  font-size: 1.1rem;
-  color: #888;
+  font-size: 1.25rem;
+  color: var(--cor-texto-secundario);
   font-weight: 300;
+  max-width: 650px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
-
+/* --- 3. CONTROLES DE FILTRO REFINADOS --- */
 .filter-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 1.5rem;
-  margin-bottom: 3rem;
+  margin-bottom: 5rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--cor-borda-sutil);
+  border-bottom: 1px solid var(--cor-borda-sutil);
 }
 
 .button-group {
   display: flex;
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
 .filter-button {
   background-color: transparent;
-  border: 1px solid #444;
-  color: #aaa;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
+  border: 1px solid transparent; /* Borda invisível para manter o tamanho */
+  color: var(--cor-texto-secundario);
+  padding: 0.7rem 1.5rem;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 500;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.filter-button:hover {
-  border-color: #00aaff;
-  color: #00aaff;
+/* Efeito de preenchimento ao passar o mouse */
+.filter-button::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--cor-amarelo-destaque);
+  transition: width 0.3s ease;
+}
+
+.filter-button:hover::before {
+  width: 100%;
 }
 
 .filter-button.active {
-  background-color: #00aaff;
-  border-color: #00aaff;
-  color: #ffffff;
+  color: var(--cor-amarelo-destaque);
   font-weight: 600;
 }
 
-.search-sort-group {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.filter-button.active::before {
+  width: 100%;
 }
 
 .search-bar {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: #2a2a2a;
-  padding: 0.7rem 1rem;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  transition: border-color 0.3s ease;
+  background-color: transparent;
+  padding: 0.8rem 0; /* Apenas padding vertical */
+  border: none;
+  border-bottom: 2px solid var(--cor-borda-sutil); /* Apenas linha inferior */
+  transition: all 0.3s ease;
 }
 
 .search-bar:focus-within {
-  border-color: #00aaff;
+  border-color: var(--cor-amarelo-destaque);
+}
+
+.search-bar svg path {
+  stroke: var(--cor-texto-secundario);
 }
 
 .search-bar input {
   background: transparent;
   border: none;
   outline: none;
-  color: #e0e0e0;
-  font-size: 0.9rem;
+  color: var(--cor-texto-principal);
+  font-size: 1rem;
   font-family: 'Poppins', sans-serif;
+  width: 200px;
 }
 
-.search-bar input::placeholder {
-  color: #888;
-}
-
-.sort-dropdown {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-  border: 1px solid #444;
-  padding: 0.7rem 1rem;
-  border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.9rem;
-  outline: none;
-}
-
-
-
+/* --- 4. GRADE DE CARROS (O GRANDE UPGRADE) --- */
 .car-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 3rem;
+}
+
+.car-card-link {
+  text-decoration: none;
 }
 
 .car-card {
-  background: linear-gradient(145deg, #2a2a2a, #1e1e1e);
-  border: 1px solid #333;
-  border-radius: 12px;
+  background: var(--cor-fundo-painel);
+  border: 1px solid var(--cor-borda-sutil);
+  border-radius: 16px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
   overflow: hidden;
-  text-align: left;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
+}
+
+.car-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 0%, var(--cor-amarelo-brilho) 0%, rgba(255,215,0,0) 60%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
 }
 
 .car-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 10px 30px rgba(0, 170, 255, 0.15);
-  border-color: rgba(0, 170, 255, 0.5);
+  transform: translateY(-12px);
+  border-color: var(--cor-borda-brilho);
+  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4);
+}
+
+.car-card:hover::before {
+  opacity: 1; /* Efeito de "spotlight" ao passar o mouse */
 }
 
 .card-image-container {
-  background-color: #1a1a1a;
-  padding: 1rem;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  z-index: 2;
 }
 
 .car-card img {
   width: 100%;
-  height: 180px;
+  height: 100%;
   object-fit: contain;
-  transition: transform 0.3s ease;
+  transition: transform 0.4s ease;
 }
 
 .car-card:hover img {
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .card-content {
   padding: 1.5rem;
+  position: relative;
+  z-index: 2;
+  background-color: var(--cor-fundo-painel);
 }
 
-/* Estilo base para todas as tags de categoria */
 .car-category {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 500;
   margin-bottom: 0.75rem;
-}
-
-
-
-.category-popular {
-  color: #3498db;
-  background-color: rgba(52, 152, 219, 0.1);
-}
-
-
-.category-luxo {
-  color: #9b59b6;
-  background-color: rgba(155, 89, 182, 0.1);
-}
-
-
-.category-esportivo {
-  color: #e74c3c;
-  background-color: rgba(231, 76, 60, 0.1);
+  color: var(--cor-texto-secundario);
 }
 
 .card-content h3 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 600;
-  color: #ffffff;
-  margin: 0;
+  color: var(--cor-texto-principal);
+  margin-bottom: 1.5rem;
+  line-height: 1.3;
 }
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--cor-texto-secundario);
+  border-top: 1px solid var(--cor-borda-sutil);
+  padding-top: 1.5rem;
+  transition: color 0.3s ease;
+}
+
+.car-card:hover .card-footer {
+  color: var(--cor-amarelo-destaque);
+}
+
+.card-footer span:last-child {
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.car-card:hover .card-footer span:last-child {
+  transform: translateX(8px);
+}
+

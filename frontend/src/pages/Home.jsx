@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Home.css';
 
-// Ícone de busca (pode ser movido para um arquivo separado se preferir)
+
 const SearchIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -11,7 +11,7 @@ const SearchIcon = () => (
 );
 
 const Home = () => {
-  // Estados para dados, carregamento e filtros
+  
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,7 +20,7 @@ const Home = () => {
   
   const filterButtons = ['Todos', 'Popular', 'Esportivo', 'Luxo'];
 
-  // Efeito para buscar os carros da API
+  
   useEffect(() => {
     fetch('http://localhost:3001/api/carros')
       .then(response => {
@@ -40,7 +40,7 @@ const Home = () => {
       });
   }, []); 
 
-  // Lógica para filtrar os carros com base na categoria e termo de busca
+  // filtrar os carros
   const filteredCars = cars
     .filter(car => {
       if (activeCategory === 'Todos') return true;
@@ -50,7 +50,7 @@ const Home = () => {
       return car.nome.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-  // Renderização condicional para estados de carregamento e erro
+  // renderizacoes condicionais para erros
   if (loading) {
     return <div className="status-message">Carregando modelos...</div>;
   }
@@ -91,8 +91,7 @@ const Home = () => {
       <main className="car-grid">
         {filteredCars.length > 0 ? (
           filteredCars.map((car) => (
-            // --- ALTERAÇÃO PRINCIPAL AQUI ---
-            // O Link usa o ID na URL (para refresh/links) e passa o objeto 'car' no state (para velocidade)
+           
             <Link 
               key={car.id} 
               to={`/personalizar/${car.id}`} 

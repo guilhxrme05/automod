@@ -1,84 +1,367 @@
-/* src/components/Perfil.css */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
+/* ---
+  ESTILO AUTOMOD v2.0 - Perfil do Usuário
+  Identidade: Premium, Dark, Foco no Amarelo
+--- */
 
+/* --- 1. VARIÁVEIS E CONFIGURAÇÃO GLOBAL --- */
+:root {
+  --cor-fundo: #111113;
+  --cor-fundo-secundario: #1C1C1E;
+  --cor-amarelo-principal: #FFC700;
+  --cor-texto-principal: #EAEAEA;
+  --cor-texto-secundario: #888888;
+  --cor-borda: #2D2D2F;
+  --cor-verde-sucesso: #28a745;
+  --cor-vermelho-erro: #dc3545;
+}
+
+/* --- 2. LAYOUT PRINCIPAL --- */
 .profile-container {
-  display: grid;
-  grid-template-columns: 280px 1fr; /* Largura da sidebar e o resto para o conteúdo */
+  display: flex;
+  font-family: 'Poppins', sans-serif;
+  color: var(--cor-texto-principal);
+  background-color: var(--cor-fundo);
+  /* <<< CORREÇÃO 1: Trava o container na altura da tela e esconde o overflow principal >>> */
+  /* Remove a barra de rolagem do navegador e a borda branca. */
   height: 100vh;
   width: 100%;
-  background-color: #1a1a1a;
-  color: #e0e0e0;
-  font-family: 'Montserrat', sans-serif;
+  overflow: hidden;
 }
 
-/* --- BARRA LATERAL (SIDEBAR) --- */
 .profile-sidebar {
-  background-color: #111;
-  padding: 2rem;
+  width: 280px;
+  flex-shrink: 0;
+  background-color: var(--cor-fundo-secundario);
+  border-right: 1px solid var(--cor-borda);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #333;
+  padding: 2.5rem 1.5rem;
 }
-.user-info { text-align: center; margin-bottom: 3rem; }
-.user-avatar { width: 120px; height: 120px; border-radius: 50%; border: 4px solid #333; margin-bottom: 1rem; object-fit: cover; }
-.user-info h2 { font-family: 'Oswald', sans-serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
-.user-info p { font-size: 0.9rem; color: #888; }
-.profile-nav { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
-.profile-nav a { color: #aaa; text-decoration: none; padding: 1rem; border-radius: 8px; transition: all 0.3s ease; }
-.profile-nav a:hover { background-color: #2a2a2a; color: #fff; }
-.profile-nav a.active { background-color: #FFD700; color: #111; font-weight: bold; }
-.logout-button { margin-top: auto; color: #e74c3c !important; }
-.logout-button:hover { background-color: rgba(231, 76, 60, 0.1) !important; }
 
+.profile-content {
+  flex-grow: 1;
+  padding: 3rem 4rem;
+  /* <<< CORREÇÃO 2: Garante que a barra de rolagem apareça AQUI DENTRO se necessário >>> */
+  overflow-y: auto;
+  height: 100%;
+}
 
-/* --- CONTEÚDO PRINCIPAL --- */
-.profile-content { padding: 0; overflow-y: auto; }
+/* --- 3. SIDEBAR --- */
+.user-info {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
 
-/* --- ✨ NOVO ESTILO PARA CENTRALIZAR O PERFIL ✨ --- */
-.profile-centered-section {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
+.user-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--cor-amarelo-principal);
+  margin-bottom: 1rem;
+  object-fit: cover;
+  box-shadow: 0 0 20px rgba(255, 199, 0, 0.2);
 }
-.profile-form-container {
-    width: 100%;
-    max-width: 700px;
+
+.user-info h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
 }
-.profile-form-container h1, #pedidos h1 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 2.5rem;
-    margin-bottom: 2.5rem;
-    text-align: center;
+
+.user-info p {
+  font-size: 0.9rem;
+  color: var(--cor-texto-secundario);
 }
-.profile-form {
-    background-color: #222;
-    padding: 3rem;
-    border-radius: 12px;
-    border: 1px solid #333;
+
+.profile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-nav button {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--cor-texto-secundario);
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.profile-nav button svg {
+  stroke: var(--cor-texto-secundario);
+  transition: stroke 0.2s ease-in-out;
+}
+
+.profile-nav button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--cor-texto-principal);
+}
+
+.profile-nav button:hover svg {
+  stroke: var(--cor-texto-principal);
+}
+
+.profile-nav button.active {
+  background-color: var(--cor-amarelo-principal);
+  color: var(--cor-fundo);
+  font-weight: 600;
+}
+
+.profile-nav button.active svg {
+  stroke: var(--cor-fundo);
+}
+
+.logout-button {
+  margin-top: auto; /* Empurra para o final */
+  color: var(--cor-vermelho-erro) !important;
+}
+.logout-button:hover {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+.logout-button:hover svg {
+  stroke: var(--cor-vermelho-erro) !important;
+}
+
+/* --- 4. CONTEÚDO PRINCIPAL (Formulário e Tabela) --- */
+.profile-content section {
+  animation: fadeIn 0.5s ease-in-out;
+  max-width: 100%; /* <<< CORREÇÃO 3: Impede que a seção vaze do container >>> */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.section-description {
+  font-size: 1.1rem;
+  color: var(--cor-texto-secundario);
+  margin-bottom: 2.5rem;
 }
 
 /* Formulário */
-.form-group { margin-bottom: 1.5rem; }
-.form-group label { display: block; font-size: 0.9rem; color: #888; margin-bottom: 0.5rem; }
-.form-group input { width: 100%; padding: 1rem; background-color: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: #e0e0e0; font-size: 1rem; font-family: 'Montserrat', sans-serif; }
-.form-group input:disabled { background-color: #222; border-color: transparent; padding-left: 0; color: #e0e0e0; }
-.form-actions { display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #333; padding-top: 2rem; }
+.profile-form {
+  background-color: var(--cor-fundo-secundario);
+  padding: 2.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+}
 
-/* Botões */
-.button-primary, .button-secondary { padding: 0.8rem 2rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease; }
-.button-primary { background-color: #FFD700; color: #111; }
-.button-primary:hover { opacity: 0.9; }
-.button-secondary { background-color: #333; color: #e0e0e0; }
-.button-secondary:hover { background-color: #444; }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* <<< CORREÇÃO 4: Grid mais responsivo >>> */
+  gap: 2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--cor-texto-secundario);
+}
+
+.form-group input {
+  background-color: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  color: var(--cor-texto-principal);
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--cor-amarelo-principal);
+  box-shadow: 0 0 0 3px rgba(255, 199, 0, 0.1);
+}
+
+.form-group input:disabled {
+  background-color: var(--cor-fundo-secundario);
+  color: var(--cor-texto-secundario);
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.button-primary, .button-secondary {
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button-primary {
+  background-color: var(--cor-amarelo-principal);
+  color: var(--cor-fundo);
+}
+.button-primary:hover {
+  filter: brightness(1.1);
+}
+
+.button-secondary {
+  background-color: transparent;
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto-principal);
+}
+.button-secondary:hover {
+  background-color: var(--cor-fundo-secundario);
+  border-color: var(--cor-texto-principal);
+}
 
 /* Tabela de Pedidos */
-#pedidos { padding: 3rem 4rem; }
-.orders-table-container { overflow-x: auto; }
-.orders-table { width: 100%; border-collapse: collapse; text-align: left; }
-.orders-table th { padding: 1rem; font-family: 'Oswald', sans-serif; font-size: 1rem; color: #888; border-bottom: 1px solid #444; }
-.orders-table td { padding: 1rem; border-bottom: 1px solid #2a2a2a; }
-.status-badge { padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
-.status-em-produção { background-color: rgba(255, 165, 0, 0.2); color: #ffa500; }
-.status-entregue { background-color: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+.orders-table-container {
+  background-color: var(--cor-fundo-secundario);
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  overflow: hidden; /* Para o radius funcionar */
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table th, .orders-table td {
+  padding: 1.2rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.orders-table thead {
+  background-color: rgba(0,0,0,0.2);
+}
+
+.orders-table th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--cor-texto-secundario);
+}
+
+.orders-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.orders-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.orders-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.error-message { color: var(--cor-vermelho-erro); text-align: center; }
+.produce-error { margin-top: 1rem; }
+
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-badge.status-no-carrinho, .status-badge.status-em-produção {
+  background-color: #e9ecef;
+  color: #495057;
+}
+.status-badge.status-enviado-para-produção {
+  background-color: rgba(255, 199, 0, 0.2);
+  color: var(--cor-amarelo-principal);
+}
+.status-badge.status-concluído {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: var(--cor-verde-sucesso);
+}
+
+.produce-button {
+  background-color: var(--cor-verde-sucesso);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.produce-button:hover { background-color: #218838; }
+.produce-button:disabled { background-color: #6c757d; cursor: not-allowed; opacity: 0.7; }
+
+/* Adicione estas classes ao final do seu Perfil.css */
+
+.remove-item-button {
+  background: none;
+  border: none;
+  color: var(--cor-texto-secundario);
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.remove-item-button:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--cor-vermelho-erro);
+}
+
+.cart-summary {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--cor-borda);
+  display: flex;
+  justify-content: flex-end; /* Alinha os botões à direita */
+  align-items: center;
+  gap: 1rem;
+}
+
+.checkout-button {
+  padding: 0.9rem 2.5rem !important;
+}
+
+.clear-cart-button {
+  color: var(--cor-texto-secundario) !important;
+}
+
+.clear-cart-button:hover {
+    border-color: var(--cor-texto-secundario) !important;
+    color: var(--cor-texto-principal) !important;
+}

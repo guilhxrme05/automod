@@ -1,5 +1,3 @@
-// src/components/Login.jsx
-
 import React, { useState } from 'react';
 import './Login.css'; 
 
@@ -9,7 +7,7 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Lógica para enviar os dados de login para a API
+    // enviar dados de login pra api
     console.log('Dados de Login:', { email, password });
   };
 
