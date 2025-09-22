@@ -10,7 +10,7 @@ const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" heigh
 
 // dados do usuario TEMPORARIAMENTE ATE TER SISTEMA DE LOGIN 
 const userData = {
-  id: 1, name: 'gui', email: 'teste@email.com', phone: '(48) 99999-9999', address: 'Florianópolis, SC', memberSince: '01/01/1990', avatar: 'public/images/perfil.png' 
+  id: 1, name: 'gui', email: 'teste@email.com', phone: '(48) 99999-9999', address: 'Florianópolis, SC', memberSince: '2025', avatar: 'public/images/perfil.png' 
 };
 
 
@@ -136,7 +136,7 @@ const Perfil = () => {
         <div className="user-info">
           <img src={userData.avatar} alt="Avatar do utilizador" className="user-avatar" />
           <h2>{userData.name}</h2>
-          <p>Membro desde {userData.memberSince}</p>
+          
         </div>
         <nav className="profile-nav">
           <button className={activeTab === 'perfil' ? 'active' : ''} onClick={() => setActiveTab('perfil')}>

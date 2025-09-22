@@ -1,0 +1,15 @@
+/*
+  Este ficheiro aplica estilos globais a toda a aplicação.
+  A regra principal aqui resolve o problema da sobreposição da Navbar.
+*/
+
+.page-content {
+  /*
+    A nossa Navbar tem uma altura aproximada de 80-90px.
+    Este padding-top cria um espaço vazio no topo de todas as páginas,
+    "empurrando" o conteúdo para baixo e garantindo que ele comece
+    exatamente onde a Navbar termina.
+  */
+  padding-top: 80px;
+}
+

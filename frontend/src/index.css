@@ -1,0 +1,16 @@
+/*
+  Este ficheiro aplica estilos globais a toda a aplicação.
+  A regra principal aqui resolve o problema da sobreposição da Navbar.
+*/
+
+.page-content {
+  /*
+    Com a Navbar a ter 90px, calculamos a altura restante do ecrã.
+    Isto garante que o nosso contentor de página ocupe exatamente
+    o espaço que sobra, sem criar uma barra de rolagem principal.
+  */
+  height: calc(100vh - 90px);
+  
+
+}
+

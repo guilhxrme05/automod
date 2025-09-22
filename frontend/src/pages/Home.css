@@ -1,7 +1,4 @@
-/* ---
-  ESTILO AUTOMOD v3.0 - Performance & Identity
-  Identidade: Tecnológica, Foco em Detalhes, Sofisticada
---- */
+
 
 /* --- 1. VARIÁVEIS E CONFIGURAÇÃO GLOBAL --- */
 :root {
@@ -267,4 +264,41 @@ body {
 .car-card:hover .card-footer span:last-child {
   transform: translateX(8px);
 }
+
+.no-results-message {
+  grid-column: 1 / -1; /* Garante que a mensagem ocupe toda a largura da grelha */
+  padding: 6rem 2rem;
+  text-align: center;
+  
+  /* A nova fonte "chique" e elegante */
+    font-family: 'Poppins', sans-serif;
+  font-style: italic;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--cor-texto-secundario);
+  line-height: 1.6;
+  opacity: 0.8;
+  
+  /* Animação subtil para dar vida */
+  animation: fadeIn 1s ease-in-out;
+}
+
+/* Adicionamos um elemento visual decorativo por cima da mensagem */
+.no-results-message::before {
+  content: '';
+  display: block;
+  font-family: 'Poppins', sans-serif; /* Usa a fonte principal para o detalhe */
+  font-style: normal;
+  font-size: 2rem;
+  color: var(--cor-amarelo-destaque);
+  margin-bottom: 1.5rem;
+  letter-spacing: 8px; /* Espaçamento para um efeito etéreo */
+}
+
+/* Animação de fade-in (já deve ter no seu CSS, mas garantimos aqui) */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 

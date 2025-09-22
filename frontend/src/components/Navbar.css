@@ -1,0 +1,153 @@
+/* ---
+  ESTILO AUTOMOD v3.0 - Navbar
+  Identidade: Flutuante, Moderna, Sofisticada
+--- */
+
+/* --- 1. VARIÁVEIS (consistentes com o resto do site) --- */
+:root {
+  --cor-fundo-profundo: #0A0A0C;
+  --cor-fundo-painel: #141418;
+  --cor-amarelo-destaque: #FFD700;
+  --cor-texto-principal: #F5F5F7;
+  --cor-texto-secundario: #A1A1A6;
+  --cor-borda-sutil: #2A2A2E;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+
+/* --- 2. ESTRUTURA PRINCIPAL DA NAVBAR --- */
+.navbar {
+  position: fixed; /* Fixa a navbar no topo */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  padding: 1.5rem 6%;
+  background-color: rgba(10, 10, 12, 0.8); /* Fundo semi-transparente */
+  backdrop-filter: blur(10px); /* Efeito de vidro fosco */
+  border-bottom: 1px solid var(--cor-borda-sutil);
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif; /* <<< CORREÇÃO APLICADA AQUI >>> */
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1600px; /* Limite de largura para telas muito grandes */
+  margin: 0 auto;
+}
+
+/* --- 3. LOGO --- */
+.navbar-logo {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cor-texto-principal);
+  text-decoration: none;
+  letter-spacing: -1px;
+}
+
+.navbar-logo span {
+  color: var(--cor-amarelo-destaque);
+  animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* --- 4. MENU DE NAVEGAÇÃO (DESKTOP) --- */
+.nav-menu {
+  display: flex;
+  gap: 2.5rem;
+  /* A fonte foi movida para .navbar para que o logo também a herde */
+}
+
+.nav-link {
+  color: var(--cor-texto-secundario);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.3s ease;
+  
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--cor-amarelo-destaque);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--cor-texto-principal);
+}
+
+/* Estilo para o link da página ativa */
+.nav-link.active {
+  color: var(--cor-amarelo-destaque);
+  font-weight: 600;
+}
+
+.nav-link.active::after {
+  width: 100%;
+}
+
+/* --- 5. MENU MOBILE --- */
+.mobile-menu-icon {
+  display: none; /* Escondido em telas grandes */
+  cursor: pointer;
+  z-index: 1002;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(10, 10, 12, 0.98);
+  backdrop-filter: blur(15px);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-100%); /* Começa escondido para cima */
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.mobile-menu.open {
+  transform: translateY(0);
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  gap: 2rem;
+}
+
+.mobile-menu .nav-link {
+  font-size: 2rem; /* Fontes grandes para fácil toque */
+}
+
+
+/* --- 6. RESPONSIVIDADE --- */
+@media screen and (max-width: 768px) {
+  .nav-menu {
+    display: none; /* Esconde o menu de desktop */
+  }
+
+  .mobile-menu-icon {
+    display: block; /* Mostra o ícone do menu hambúrguer */
+  }
+}
+
