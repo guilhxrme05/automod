@@ -33,44 +33,33 @@ O projeto AutoMod utiliza uma bancada automatizada para representar fisicamente 
 
 ## 🚗 Carro Popular (1 bloco)
 
-| Posição da Placa | Representa            | Cor Importa? | Observação                         |
-|------------------|-----------------------|--------------|------------------------------------|
-| Frente           | Cor do carro          | ✅ Sim       | Define a cor da lataria do carro   |
-| Direita          | Câmbio                | ✅ Sim       | Preto = Manual, Branco = Automático |
-| Esquerda         | Tipo de roda          | ❌ Não       | Sem placa = roda padrão            |
+| Posição da Placa | Representa            | Cor Importa? | Observação                                                   |
+|------------------|-----------------------|--------------|--------------------------------------------------------------|
+| Frente           | Cor do carro          | ✅ Sim       | Define a cor do carro.                                       |
+| Direita          | Câmbio                | ✅ Sim       | Ex: manual, automático, cvt, butterfly.                      |
+| Esquerda         | Roda                  | ✅ Sim       | Ex: asfalto comum, asfalto premium, rally, drift, off-road.  |
 
 ---
 
 ## 🏎️ Carro Esportivo (2 blocos)
 
-| Posição da Placa | Representa             | Cor Importa? | Observação                               |
-|------------------|------------------------|--------------|------------------------------------------|
-| Frente           | Tipo de tração         | ✅ Sim       | Ex: cor indica tração dianteira, traseira etc. |
-| Direita          | Tipo de acabamento     | ✅ Sim       | Ex: metálico, fosco, perolado            |
-| Esquerda         | Aerofólio              | ❌ Não       | Apenas a presença da placa já ativa      |
+| Posição da Placa | Representa             | Cor Importa? | Observação                                   |
+|------------------|------------------------|--------------|----------------------------------------------|
+| Frente           | Tração                 | ✅ Sim       | Ex: tração traseira, dianteira, 4x4.         |
+| Direita          | Acabamento exterior    | ✅ Sim       | Ex: metálico, fosco, perolado.               |
+| Esquerda         | Aerofólio              | ✅ Sim       | Ex: wing type, ducktail type, gt type.       |
 
 ---
 
 ## 🚘 Carro de Luxo (3 blocos)
 
-| Posição da Placa | Representa                  | Cor Importa? | Observação                                               |
-|------------------|-----------------------------|--------------|----------------------------------------------------------|
-| Frente           | Tipo de interior            | ✅ Sim       | Ex: couro, tecido, cor dos bancos                        |
-| Direita          | IA implementada             | ❌Não        | Apenas a presença já indica personalização ativa         |
-| Esquerda         | Personalização de placa     | ❌ Não       | Apenas a presença já indica personalização ativa         |
+| Posição da Placa | Representa                  | Cor Importa? | Observação                                                    |
+|------------------|-----------------------------|--------------|---------------------------------------------------------------|
+| Frente           | Interior                    | ✅ Sim       | Ex: couro, tecido, cor dos bancos.                            |
+| Direita          | Exterior                    | ✅ Sim       | Ex: aço comum, aço premium, fibra de carbono, titanium.       |
+| Esquerda         | Iluminação                  | ✅ Sim       | Ex: led, oled, neon, xeon, laser.                             |
 
 ---
 
-### 🧩 Chassis
-
-| Cor do Chassi | Função                       |
-|---------------|------------------------------|
-| Azul          | Base superior                |
-| Preto         | Base central (suporte principal) |
-| Vermelho      | Base inferior                |
-
-> *Os chassis servem como suporte estrutural para os blocos e não representam atributos personalizados.*
-
----
 
 
