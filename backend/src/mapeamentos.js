@@ -1,31 +1,78 @@
 const mapeamentos = {
-    
-    corDoBloco: {
-        'Gasolina': 1, 
-        'Elétrico': 2, 
-        'Híbrido':  3, 
-    },
-    
-    coresGerais: {
-        '#ffffff': 6, '#000000': 5, '#ff0000': 1, '#0000ff': 2,
-        '#f8ff32': 3, '#008000': 4, '#c0c0c0': 6, '#808080': 5,
 
-        
-        'Metálico': 1, 'Fosco': 5, 'Perolado': 6,          // Acabamento da Cor
-        'Dianteira': 4, 'Traseira': 1, '4x4': 2,           // Tipo de Tração (Verde, Vermelho, Azul)
-        'Couro': 5, 'Tecido': 6, 'Alcântara': 2,           // Material do Interior
-        'LED': 6, 'OLED': 0, 'Neon': 2, 'Xenon': 3, 'Laser': 1, // Tecnologia dos Faróis
+    corDoBloco: {
+    'Gasolina': 1, 
+    'Elétrico': 2, 
+    'Híbrido':  3, 
     },
-    
-   
-    cambio: {
-        'Manual': 5,     // Código 5 = Preto
-        'Automático': 6, // Código 6 = Branco
-        'CVT': 0,        // Padrão
-        'Borboleta': 1   // Padrão
-    }
+
+    corExterna: {
+    '#ffffff': 6,
+    '#000000': 5,
+    '#ff0000': 1,
+    '#0000ff': 2,
+    '#f8ff32': 3,
+    '#008000': 4,
+    },
+
+   acabamentoCor: {
+    'Metálico': 6,
+    'Fosco': 5,
+    'Perolado': 2,
+    'Sólido': 0,
+   },
+
+   materialExterno: {
+    'Aço comum': 0,
+    'Aço premium': 4,
+    'Fibra de Carbono': 5,
+    'Titânio': 2,
+   },
+
+   materialInterno: {
+    'Couro': 5,
+    'Couro Sintético': 6,
+    'Tecido': 3,
+    'Alcântara': 1,
+   },
+
+   iluminacao: {
+    'Led': 0,
+    'Oled': 5,
+    'Neon': 2,
+    'Xenon': 4,
+    'Laser': 1,
+   },
+
+   tracao: {
+    'Dianteira': 0,
+    'Traseira': 5,
+    '4x4': 4,
+   },
+
+   cambio: {
+    'Manual': 0,
+    'Automático': 5, 
+    'CVT': 2,
+    'Borboleta': 6
+   },
+
+   roda: {
+    'Asfalto comum': 0, 
+    'Asfalto premium': 3, 
+    'Drift': 6, 
+    'Rally': 4, 
+    'Off-road': 1
+   },
+
+    aerofolio: {
+    'Sem': 0,
+    'Lip Type': 3,
+    'Ducktail Type': 6,
+    'Gt Wing Type': 5,
+    'Swan Neck Type': 1,
+    'Retrátil': 4,
+    },
 };
 
-
 module.exports = mapeamentos;
-

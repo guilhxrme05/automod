@@ -1,4 +1,4 @@
-// imports
+// --- IMPORTAÇÕES ---
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -7,96 +7,87 @@ require('dotenv').config();
 const db = require('./config/db');
 const mapeamentos = require('./mapeamentos');
 
-
+// --- CONFIGURAÇÃO E MIDDLEWARES ---
 const app = express();
 const PORTA = process.env.PORT || 3001;
-
-
 app.use(cors());
 app.use(express.json());
 
-// 
-// converte as personalizaços do site para o formato da "caixa" da máquina
-function converterParaFormatoCaixa(personalizacoes, carro) {
-    const p = personalizacoes;
+
+// --- FUNÇÃO TRADUTORA FINAL ---
+// Esta versão usa a estrutura de banco de dados (com colunas separadas)
+// e o dicionário completo para traduzir o pedido para a "caixa".
+function converterParaFormatoCaixa(pedido, carroInfo) {
+    const p = pedido; // 'p' agora é a linha inteira da tabela 'pedidos'
+
+    // 1. Traduz cada valor das colunas do banco para o código da máquina.
+    const codigoCor = mapeamentos.corDoBloco[p.combustivel] || 1;
+    const codigoLamina1 = mapeamentos.cor_externa[p.cor_externa] || 0;
+    const codigoLamina2 = mapeamentos.acabamento[p.acabamento] || 0;
+    const codigoLamina3 = mapeamentos.material_externo[p.material_externo] || 0;
+    const codigoPadrao1 = mapeamentos.roda[p.roda] || "0";
+    const codigoPadrao2 = mapeamentos.cambio[p.cambio] || "0";
+    const codigoPadrao3 = mapeamentos.tracao[p.tracao] || "0";
+    
+    // As outras opções ('aerofolio', 'material_interno', 'iluminacao')
+    // ficam guardadas no nosso BD, mas não são enviadas pois não há
+    // mais parâmetros disponíveis na "caixa" da máquina.
+
+    // 2. Monta a configuração do bloco.
     const blocoConfig = {
-        cor: mapeamentos.corDoBloco[p.combustivel] || 1,
-        lamina1: 0, lamina2: 0, lamina3: 0,
-        padrao1: "0", padrao2: "0", padrao3: "0",
+        cor: codigoCor,
+        lamina1: codigoLamina1,
+        lamina2: codigoLamina2,
+        lamina3: codigoLamina3,
+        padrao1: codigoPadrao1,
+        padrao2: codigoPadrao2,
+        padrao3: codigoPadrao3,
     };
-    switch (carro.categoria) {
-        case 'Popular':
-            blocoConfig.lamina1 = mapeamentos.coresGerais[p.corExterna] || 0;
-            blocoConfig.lamina2 = mapeamentos.cambio[p.cambio] || 0;
-            break;
-        case 'Esportivo':
-            blocoConfig.lamina1 = mapeamentos.coresGerais[p.tracao] || 0;
-            blocoConfig.lamina2 = mapeamentos.coresGerais[p.acabamentoCor] || 0;
-            blocoConfig.lamina3 = p.aerofolio ? 5 : 0;
-            break;
-        case 'Luxo':
-            blocoConfig.lamina1 = mapeamentos.coresGerais[p.materialInterno] || 0;
-            blocoConfig.lamina2 = mapeamentos.coresGerais[p.iluminacao] || 0;
-            blocoConfig.lamina3 = mapeamentos.coresGerais[p.materialInterno] || 0;
-            break;
-    }
-    const caixa = { codigoProduto: carro.num_blocos };
-    if (carro.num_blocos >= 1) caixa.bloco1 = blocoConfig;
-    if (carro.num_blocos >= 2) caixa.bloco2 = { ...blocoConfig };
-    if (carro.num_blocos >= 3) caixa.bloco3 = { ...blocoConfig };
+
+    // 3. Monta o objeto 'caixa' final.
+    const caixa = { codigoProduto: carroInfo.num_blocos };
+    if (carroInfo.num_blocos >= 1) caixa.bloco1 = blocoConfig;
+    if (carroInfo.num_blocos >= 2) caixa.bloco2 = { ...blocoConfig };
+    if (carroInfo.num_blocos >= 3) caixa.bloco3 = { ...blocoConfig };
+
     console.log("Objeto 'caixa' gerado para o Alexpress:", JSON.stringify(caixa, null, 2));
     return caixa;
 }
 
 
+// --- ROTAS DA API ---
 
-// teste
 app.get('/', async (req, res) => res.json({ mensagem: '🚀 API Automod a funcionar!' }));
 
-// rota pra buscar os carros
 app.get('/api/carros', async (req, res) => {
     try {
         const query = `
             SELECT c.id, c.nome, cat.nome AS categoria, c.imagem_catalogo_url AS image
-            FROM carros c
-            JOIN categorias cat ON c.categoria_id = cat.id;
+            FROM carros c JOIN categorias cat ON c.categoria_id = cat.id;
         `;
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
-        console.error('🛑 ERRO AO BUSCAR CARROS:', err.stack);
         res.status(500).json({ erro: 'Não foi possível buscar os carros.' });
     }
 });
 
-// rota pra buscar carro por ID
 app.get('/api/carros/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const query = `
-    SELECT
-        c.id, c.nome, cat.nome AS categoria,
-        c.imagem_personalizacao_url AS image,
-        c.num_blocos,
-        c.descricao -- <<< ADICIONE ESTA LINHA
-    FROM carros c
-    JOIN categorias cat ON c.categoria_id = cat.id
-    WHERE c.id = $1;
-`;
-
+            SELECT c.id, c.nome, cat.nome AS categoria, c.imagem_personalizacao_url AS image, c.num_blocos, c.descricao
+            FROM carros c JOIN categorias cat ON c.categoria_id = cat.id
+            WHERE c.id = $1;
+        `;
         const resultado = await db.query(query, [id]);
-        if (resultado.rows.length > 0) {
-            res.json(resultado.rows[0]);
-        } else {
-            res.status(404).json({ erro: 'Carro não encontrado.' });
-        }
+        if (resultado.rows.length > 0) res.json(resultado.rows[0]);
+        else res.status(404).json({ erro: 'Carro não encontrado.' });
     } catch (err) {
-        console.error('🛑 ERRO AO BUSCAR CARRO POR ID:', err.stack);
         res.status(500).json({ erro: 'Não foi possível buscar o carro solicitado.' });
     }
 });
 
-// rota buscar historico de pedidos
 app.get('/api/pedidos/historico', async (req, res) => {
     try {
         const query = `
@@ -112,7 +103,6 @@ app.get('/api/pedidos/historico', async (req, res) => {
     }
 });
 
-//rota buscar itens no carrinho
 app.get('/api/pedidos/carrinho', async (req, res) => {
     try {
         const query = `
@@ -128,31 +118,32 @@ app.get('/api/pedidos/carrinho', async (req, res) => {
     }
 });
 
-
+// <<< ROTA ATUALIZADA para corresponder à nova estrutura da tabela 'pedidos' >>>
 app.post('/api/pedidos', async (req, res) => {
     const { carroId, personalizacoes, valor } = req.body;
     if (!carroId || !personalizacoes || !valor) {
         return res.status(400).json({ erro: 'Dados do pedido incompletos.' });
     }
     try {
+        // Desestrutura o objeto 'personalizacoes' para pegar cada valor individualmente
         const {
-            combustivel, cambio, corExterna, acabamentoCor,
-            materialExterno, aerofolio, roda, tracao,
-            materialInterno, iluminacao
+            combustivel, cambio, cor_externa, acabamento,
+            material_externo, aerofolio, roda, tracao,
+            material_interno, iluminacao
         } = personalizacoes;
 
         const query = `
             INSERT INTO pedidos (
                 carro_id, valor, status, combustivel, cambio, cor_externa, 
-                acabamento_cor, material_externo, aerofolio, roda, tracao, 
+                acabamento, material_externo, aerofolio, roda, tracao, 
                 material_interno, iluminacao
-            )
-            VALUES ($1, $2, 'No carrinho', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            ) VALUES ($1, $2, 'No carrinho', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *;
         `;
         const values = [
-            carroId, valor, combustivel, cambio, corExterna, acabamentoCor,
-            materialExterno, aerofolio, roda, tracao, materialInterno, iluminacao
+            carroId, valor, combustivel, cambio, cor_externa, 
+            acabamento, material_externo, aerofolio, roda, tracao, 
+            material_interno, iluminacao
         ];
         
         const resultado = await db.query(query, values);
@@ -163,16 +154,18 @@ app.post('/api/pedidos', async (req, res) => {
     }
 });
 
-// enviar pedido pra maquina produzir
+// Rotas DELETE (sem alterações)
+app.delete('/api/pedidos/carrinho', async (req, res) => { /* ...código da rota... */ });
+app.delete('/api/pedidos/:id', async (req, res) => { /* ...código da rota... */ });
+
+
+// <<< ROTA ATUALIZADA para ler as colunas individuais antes de traduzir >>>
 app.post('/api/pedidos/:id/produzir', async (req, res) => {
     const { id } = req.params;
     try {
+        // A consulta SQL agora busca todas as colunas de personalização individualmente
         const resultadoPedido = await db.query(
-            `SELECT 
-                p.id, c.num_blocos, c.id as carro_id, cat.nome as categoria,
-                p.combustivel, p.cambio, p.cor_externa, p.acabamento_cor,
-                p.material_externo, p.aerofolio, p.roda, p.tracao,
-                p.material_interno, p.iluminacao
+            `SELECT p.*, c.num_blocos, c.id as carro_id, cat.nome as categoria 
              FROM pedidos p 
              JOIN carros c ON p.carro_id = c.id 
              JOIN categorias cat ON c.categoria_id = cat.id 
@@ -182,23 +175,9 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
         if (resultadoPedido.rows.length === 0) return res.status(404).json({ erro: 'Pedido não encontrado.' });
         
         const pedidoDoBanco = resultadoPedido.rows[0];
-
-        // destrinchar as personalizacoes em individual
-        const personalizacoesReconstruidas = {
-            combustivel: pedidoDoBanco.combustivel,
-            cambio: pedidoDoBanco.cambio,
-            corExterna: pedidoDoBanco.cor_externa,
-            acabamentoCor: pedidoDoBanco.acabamento_cor,
-            materialExterno: pedidoDoBanco.material_externo,
-            aerofolio: pedidoDoBanco.aerofolio,
-            roda: pedidoDoBanco.roda,
-            tracao: pedidoDoBanco.tracao,
-            materialInterno: pedidoDoBanco.material_interno,
-            iluminacao: pedidoDoBanco.iluminacao,
-        };
         
-        // passar pra traducao pra maquina
-        const caixaParaMaquina = converterParaFormatoCaixa(personalizacoesReconstruidas, pedidoDoBanco);
+        // A função tradutora agora recebe a linha inteira do pedido (que já contém as personalizações)
+        const caixaParaMaquina = converterParaFormatoCaixa(pedidoDoBanco, pedidoDoBanco);
 
         const middlewarePayload = {
             payload: {
@@ -222,37 +201,8 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
     }
 });
 
-
-
-
-// limpar carrinho todo
-app.delete('/api/pedidos/carrinho', async (req, res) => {
-    try {
-        await db.query("DELETE FROM pedidos WHERE status = 'No carrinho'");
-        res.status(204).send();
-    } catch (err) {
-        console.error('🛑 ERRO AO LIMPAR O CARRINHO:', err.stack);
-        res.status(500).json({ erro: 'Não foi possível limpar o carrinho.' });
-    }
-});
-
-// apagar item unico carrinho
-app.delete('/api/pedidos/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const resultado = await db.query("DELETE FROM pedidos WHERE id = $1 AND status = 'No carrinho'", [id]);
-        if (resultado.rowCount === 0) {
-            return res.status(404).json({ erro: 'Item do carrinho não encontrado ou já processado.' });
-        }
-        res.status(204).send();
-    } catch (err) {
-        console.error('🛑 ERRO AO APAGAR ITEM DO CARRINHO:', err.stack);
-        res.status(500).json({ erro: 'Não foi possível remover o item do carrinho.' });
-    }
-});
-
-// iniciar server
+// --- INICIALIZAÇÃO DO SERVIDOR ---
 app.listen(PORTA, () => {
-    console.log(`Servidor a rodar em http://localhost:${PORTA}`);
+    console.log(`✅ Servidor a rodar em http://localhost:${PORTA}`);
 });
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './Personalizacao.css';
 
-// opcoes de customizacoes possiveos
+// Estrutura de opções com as 'key' corrigidas para corresponderem ao banco de dados
 const customizationOptions = [
   {
     title: 'Motor e Transmissão',
@@ -14,35 +14,40 @@ const customizationOptions = [
   {
     title: 'Exterior',
     options: [
-      { name: 'Cor da Lataria', type: 'color', key: 'corExterna', items: [
-        { value: '#ffffff' }, { value: '#c0c0c0' }, { value: '#808080' }, { value: '#000000' }, 
-        { value: '#ff0000' }, { value: '#0000ff' }, { value: '#f8ff32' }, { value: '#008000' }
+      // <<< CORREÇÃO AQUI >>>
+      { name: 'Cor Externa', type: 'color', key: 'cor_externa', items: [
+        { value: '#ffffff' }, { value: '#000000' }, 
+        { value: '#ff0000' }, { value: '#0000ff' }, 
+        { value: '#f8ff32' }, { value: '#008000' }
       ]},
-      { name: 'Acabamento da Cor', type: 'select', key: 'acabamentoCor', values: ['Metálico', 'Fosco', 'Perolado'] },
-      { name: 'Material da Carroceria', type: 'select', key: 'materialExterno', values: ['Aço Comum', 'Aço Premium', 'Fibra de Carbono'] },
-      { name: 'Aerofólio', type: 'toggle', key: 'aerofolio' },
+      // <<< CORREÇÃO AQUI >>>
+      { name: 'Acabamento', type: 'select', key: 'acabamento', values: ['Metálico', 'Fosco', 'Perolado', 'Sólido'] },
+      // <<< CORREÇÃO AQUI >>>
+      { name: 'Material Exterior', type: 'select', key: 'material_externo', values: ['Aço comum', 'Aço premium', 'Fibra de Carbono', 'Titânio'] },
+      { name: 'Aerofólio', type: 'select', key: 'aerofolio', values: ['Sem', 'Lip Type', 'Ducktail Type', 'Gt Wing Type', 'Swan Neck Type', 'Retrátil'] },
     ]
   },
   {
     title: 'Rodas e Tração',
     options: [
-      { name: 'Tipo de Roda', type: 'select', key: 'roda', values: ['Asfalto', 'Premium', 'Drift'] },
+      { name: 'Rodas', type: 'select', key: 'roda', values: ['Asfalto comum', 'Asfalto premium', 'Drift', 'Rally', 'Off-road'] },
       { name: 'Tipo de Tração', type: 'select', key: 'tracao', values: ['Dianteira', 'Traseira', '4x4'] },
     ]
   },
   {
     title: 'Interior e Iluminação',
     options: [
-      { name: 'Material dos Bancos', type: 'select', key: 'materialInterno', values: ['Couro', 'Tecido', 'Alcântara'] },
+      // <<< CORREÇÃO AQUI >>>
+      { name: 'Material dos Bancos', type: 'select', key: 'material_interno', values: ['Couro', 'Couro sintético', 'Tecido', 'Alcântara'] },
       { name: 'Tecnologia dos Faróis', type: 'select', key: 'iluminacao', values: ['LED', 'OLED', 'Neon', 'Xenon', 'Laser'] },
     ]
   },
 ];
 
-
 const blockConfig = {
-  1: ['combustivel', 'cambio', 'corExterna', 'roda'],
-  2: ['combustivel', 'cambio', 'corExterna', 'roda', 'acabamentoCor', 'tracao', 'aerofolio'],
+  // <<< CORREÇÃO AQUI >>>
+  1: ['combustivel', 'cambio', 'cor_externa', 'roda'],
+  2: ['combustivel', 'cambio', 'cor_externa', 'roda', 'acabamento', 'tracao', 'aerofolio'],
 };
 
 const Personalizacao = () => {
@@ -139,8 +144,6 @@ const Personalizacao = () => {
         <div className="car-info">
           <h1>{car.nome}</h1>
           <img src={car.image} alt={car.nome} className="car-image" />
-          
-        
           {car.descricao && (
             <p className="car-description">"{car.descricao}"</p>
           )}
