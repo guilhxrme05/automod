@@ -14,43 +14,53 @@ app.use(cors());
 app.use(express.json());
 
 
-// --- FUNÇÃO TRADUTORA FINAL ---
-// Esta versão usa a estrutura de banco de dados (com colunas separadas)
-// e o dicionário completo para traduzir o pedido para a "caixa".
+// --- FUNÇÃO TRADUTORA FINAL E INTELIGENTE (LÓGICA MULTI-BLOCO) ---
+// Esta é a versão correta da função, que lê as colunas individuais do pedido.
 function converterParaFormatoCaixa(pedido, carroInfo) {
     const p = pedido; // 'p' agora é a linha inteira da tabela 'pedidos'
 
-    // 1. Traduz cada valor das colunas do banco para o código da máquina.
-    const codigoCor = mapeamentos.corDoBloco[p.combustivel] || 1;
-    const codigoLamina1 = mapeamentos.cor_externa[p.cor_externa] || 0;
-    const codigoLamina2 = mapeamentos.acabamento[p.acabamento] || 0;
-    const codigoLamina3 = mapeamentos.material_externo[p.material_externo] || 0;
-    const codigoPadrao1 = mapeamentos.roda[p.roda] || "0";
-    const codigoPadrao2 = mapeamentos.cambio[p.cambio] || "0";
-    const codigoPadrao3 = mapeamentos.tracao[p.tracao] || "0";
+    // 1. Prepara um "chassi" para cada bloco possível
+    const configBase = { cor: 0, lamina1: 0, lamina2: 0, lamina3: 0, padrao1: "0", padrao2: "0", padrao3: "0" };
+    let bloco1Config = { ...configBase };
+    let bloco2Config = { ...configBase };
+    let bloco3Config = { ...configBase };
+
+    // 2. Aplica a regra geral: Cor do Bloco = Combustível
+    const codigoCorBase = mapeamentos.corDoBloco[p.combustivel] || 1;
+    bloco1Config.cor = codigoCorBase;
+    bloco2Config.cor = codigoCorBase;
+    bloco3Config.cor = codigoCorBase;
+
+    // 3. Distribui TODAS as personalizações pelos blocos e seus parâmetros
     
-    // As outras opções ('aerofolio', 'material_interno', 'iluminacao')
-    // ficam guardadas no nosso BD, mas não são enviadas pois não há
-    // mais parâmetros disponíveis na "caixa" da máquina.
+    // --- Bloco 1: Focado no Exterior Principal ---
+    if (carroInfo.num_blocos >= 1) {
+        bloco1Config.lamina1 = mapeamentos.cor_externa[p.cor_externa] || 0;
+        bloco1Config.lamina2 = mapeamentos.acabamento[p.acabamento] || 0;
+        bloco1Config.padrao1 = mapeamentos.roda[p.roda] || "0";
+    }
 
-    // 2. Monta a configuração do bloco.
-    const blocoConfig = {
-        cor: codigoCor,
-        lamina1: codigoLamina1,
-        lamina2: codigoLamina2,
-        lamina3: codigoLamina3,
-        padrao1: codigoPadrao1,
-        padrao2: codigoPadrao2,
-        padrao3: codigoPadrao3,
-    };
+    // --- Bloco 2: Focado em Performance e Detalhes ---
+    if (carroInfo.num_blocos >= 2) {
+        bloco2Config.lamina1 = mapeamentos.tracao[p.tracao] || 0;
+        bloco2Config.padrao1 = mapeamentos.cambio[p.cambio] || "0";
+        bloco2Config.lamina2 = mapeamentos.aerofolio[p.aerofolio] ? 5 : 0; // Usando a regra do aerofolio
+    }
 
-    // 3. Monta o objeto 'caixa' final.
+    // --- Bloco 3: Focado no Interior e Tecnologia ---
+    if (carroInfo.num_blocos >= 3) {
+        bloco3Config.lamina1 = mapeamentos.material_interno[p.material_interno] || 0;
+        bloco3Config.lamina2 = mapeamentos.iluminacao[p.iluminacao] || 0;
+        bloco3Config.lamina3 = mapeamentos.material_externo[p.material_externo] || 0;
+    }
+
+    // --- Montagem Final da "Caixa" ---
     const caixa = { codigoProduto: carroInfo.num_blocos };
-    if (carroInfo.num_blocos >= 1) caixa.bloco1 = blocoConfig;
-    if (carroInfo.num_blocos >= 2) caixa.bloco2 = { ...blocoConfig };
-    if (carroInfo.num_blocos >= 3) caixa.bloco3 = { ...blocoConfig };
+    if (carroInfo.num_blocos >= 1) caixa.bloco1 = bloco1Config;
+    if (carroInfo.num_blocos >= 2) caixa.bloco2 = bloco2Config;
+    if (carroInfo.num_blocos >= 3) caixa.bloco3 = bloco3Config;
 
-    console.log("Objeto 'caixa' gerado para o Alexpress:", JSON.stringify(caixa, null, 2));
+    console.log("Objeto 'caixa'gerado:", JSON.stringify(caixa, null, 2));
     return caixa;
 }
 
@@ -68,6 +78,7 @@ app.get('/api/carros', async (req, res) => {
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
+        console.error('🛑 ERRO AO BUSCAR CARROS:', err.stack);
         res.status(500).json({ erro: 'Não foi possível buscar os carros.' });
     }
 });
@@ -84,6 +95,7 @@ app.get('/api/carros/:id', async (req, res) => {
         if (resultado.rows.length > 0) res.json(resultado.rows[0]);
         else res.status(404).json({ erro: 'Carro não encontrado.' });
     } catch (err) {
+        console.error('🛑 ERRO AO BUSCAR CARRO POR ID:', err.stack);
         res.status(500).json({ erro: 'Não foi possível buscar o carro solicitado.' });
     }
 });
@@ -118,14 +130,12 @@ app.get('/api/pedidos/carrinho', async (req, res) => {
     }
 });
 
-// <<< ROTA ATUALIZADA para corresponder à nova estrutura da tabela 'pedidos' >>>
 app.post('/api/pedidos', async (req, res) => {
     const { carroId, personalizacoes, valor } = req.body;
     if (!carroId || !personalizacoes || !valor) {
         return res.status(400).json({ erro: 'Dados do pedido incompletos.' });
     }
     try {
-        // Desestrutura o objeto 'personalizacoes' para pegar cada valor individualmente
         const {
             combustivel, cambio, cor_externa, acabamento,
             material_externo, aerofolio, roda, tracao,
@@ -154,16 +164,9 @@ app.post('/api/pedidos', async (req, res) => {
     }
 });
 
-// Rotas DELETE (sem alterações)
-app.delete('/api/pedidos/carrinho', async (req, res) => { /* ...código da rota... */ });
-app.delete('/api/pedidos/:id', async (req, res) => { /* ...código da rota... */ });
-
-
-// <<< ROTA ATUALIZADA para ler as colunas individuais antes de traduzir >>>
 app.post('/api/pedidos/:id/produzir', async (req, res) => {
     const { id } = req.params;
     try {
-        // A consulta SQL agora busca todas as colunas de personalização individualmente
         const resultadoPedido = await db.query(
             `SELECT p.*, c.num_blocos, c.id as carro_id, cat.nome as categoria 
              FROM pedidos p 
@@ -176,7 +179,7 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
         
         const pedidoDoBanco = resultadoPedido.rows[0];
         
-        // A função tradutora agora recebe a linha inteira do pedido (que já contém as personalizações)
+        // A função tradutora agora recebe a linha inteira do pedido, que já contém as personalizações
         const caixaParaMaquina = converterParaFormatoCaixa(pedidoDoBanco, pedidoDoBanco);
 
         const middlewarePayload = {
@@ -200,6 +203,32 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
         res.status(500).json({ erro: 'Não foi possível enviar o pedido para a produção.' });
     }
 });
+
+// Rotas DELETE
+app.delete('/api/pedidos/carrinho', async (req, res) => {
+    try {
+        await db.query("DELETE FROM pedidos WHERE status = 'No carrinho'");
+        res.status(204).send();
+    } catch (err) {
+        console.error('🛑 ERRO AO LIMPAR O CARRINHO:', err.stack);
+        res.status(500).json({ erro: 'Não foi possível limpar o carrinho.' });
+    }
+});
+
+app.delete('/api/pedidos/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const resultado = await db.query("DELETE FROM pedidos WHERE id = $1 AND status = 'No carrinho' RETURNING *", [id]);
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({ erro: 'Item do carrinho não encontrado ou já processado.' });
+        }
+        res.status(204).send();
+    } catch (err) {
+        console.error('🛑 ERRO AO APAGAR ITEM DO CARRINHO:', err.stack);
+        res.status(500).json({ erro: 'Não foi possível remover o item do carrinho.' });
+    }
+});
+
 
 // --- INICIALIZAÇÃO DO SERVIDOR ---
 app.listen(PORTA, () => {
