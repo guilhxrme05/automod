@@ -365,3 +365,94 @@
     border-color: var(--cor-texto-secundario) !important;
     color: var(--cor-texto-principal) !important;
 }
+
+.orders-table tbody tr.trackable {
+    cursor: pointer;
+}
+.orders-table tbody tr.trackable:hover {
+    background-color: rgba(255, 215, 0, 0.04) !important;
+}
+
+/* Modal de Rastreio */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    animation: fadeInModal 0.3s ease;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: var(--cor-fundo-painel);
+    padding: 2.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--cor-borda-sutil);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: slideInModal 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes slideInModal {
+  from { 
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--cor-texto-secundario);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+.modal-close-button:hover {
+    color: var(--cor-texto-principal);
+}
+
+.modal-content h2 {
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+}
+
+.rastreio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.rastreio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--cor-fundo-profundo);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda-sutil);
+}
+
+.rastreio-bloco {
+    font-weight: 500;
+    font-size: 1.1rem;
+}
