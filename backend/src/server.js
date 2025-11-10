@@ -223,18 +223,14 @@ app.delete('/api/pedidos/:id', async (req, res) => {
 });
 
 // ===============================================
-// MOCK COMPLETO DA MÁQUINA (VERSÃO GUI DELUXE 2025)
-// Funciona no Render e no teu PC local
+// MOCK DA MÁQUINA - SLOTS DE 1 A 12
 // ===============================================
 const crypto = require('crypto');
 const jobQueue = {};
 
-// ROTA DO MOCK (recebe o pedido do backend)
+// POST - recebe pedido do backend
 app.post('/queue/items', (req, res) => {
-    console.log("\n🎯 MOCK RENDER: NOVO PEDIDO CHEGOU PRA PRODUÇÃO!");
-
     if (!req.body?.payload?.caixa) {
-        console.error("❌ Payload zuado ou sem 'caixa'");
         return res.status(400).json({ error: "Payload inválido" });
     }
 
@@ -249,16 +245,17 @@ app.post('/queue/items', (req, res) => {
         criadoEm: new Date()
     };
 
-    console.log(`✅ Job ${jobId} criado. Total na fila: ${Object.keys(jobQueue).length}`);
-
     res.status(201).json({ id: jobId });
 
-    // CALLBACK AUTOMÁTICO EM 5 SEGUNDOS
     setTimeout(async () => {
         if (jobQueue[jobId]) {
             jobQueue[jobId].status = 'Concluído';
-            const slots = ['Slot A1', 'Slot B2', 'Slot C3', 'Área 4', 'Slot X9', 'Linha 7', 'Slot Z10'];
-            const slot = slots[Math.floor(Math.random() * slots.length)];
+            jobQueue[jobId].concluidoEm = new Date();
+
+            // SLOT DE 1 A 12
+            const slot = String(Math.floor(Math.random() * 12) + 1);
+
+            jobQueue[jobId].slot = slot;
 
             try {
                 await fetch(callbackUrl, {
@@ -266,24 +263,26 @@ app.post('/queue/items', (req, res) => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: 'Concluído', slot })
                 });
-                console.log(`🎉 CALLBACK ENVIADO → Job ${jobId} | Slot: ${slot}`);
             } catch (err) {
-                console.log('⚠️ Callback falhou (normal se o server reiniciou)');
+                // silencioso
             }
         }
     }, 5000);
 });
 
-// BONUS: abre no navegador pra ver a fila
+// GET - lista jobs com slot real
 app.get('/queue/items', (req, res) => {
+    const jobs = Object.values(jobQueue).map(job => ({
+        id: job.id,
+        status: job.status,
+        orderId: job.payload?.orderId || null,
+        slot: job.slot || null,
+        concluido_em: job.concluidoEm || null
+    }));
+
     res.json({
-        total: Object.keys(jobQueue).length,
-        jobs: Object.values(jobQueue).map(j => ({
-            id: j.id,
-            status: j.status,
-            orderId: j.payload?.orderId,
-            slot: j.status === 'Concluído' ? 'gerado no callback' : 'aguardando'
-        }))
+        total: jobs.length,
+        jobs: jobs
     });
 });
 // --- INICIALIZAÇÃO DO SERVIDOR ---
