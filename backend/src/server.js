@@ -156,7 +156,7 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
         };
 
         // TROCA AQUI PRA MÁQUINA REAL (só mudar a variável)
-        const USE_REAL_MACHINE = true;
+        const USE_REAL_MACHINE = false;
         const MIDDLEWARE_URL = USE_REAL_MACHINE
             ? 'http://52.1.197.112:3000'
             : 'http://localhost:3001';
