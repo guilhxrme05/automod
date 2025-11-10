@@ -456,3 +456,44 @@
     font-weight: 500;
     font-size: 1.1rem;
 }
+
+/* BOTÃO CONFIRMAR ENTREGA */
+.btn-entregar {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-entregar:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-entregar:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.status-entregue {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .btn-entregar {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}

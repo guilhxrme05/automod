@@ -13,6 +13,8 @@ const PORTA = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// URL PÚBLICA DO CALLBACK (máquina real consegue acessar)
+const CALLBACK_BASE = process.env.CALLBACK_BASE_URL || 'https://api-node-automod.onrender.com';
 
 // --- FUNÇÃO TRADUTORA (Correta - Monta a caixa completa) ---
 function converterParaFormatoCaixa(pedido, carroInfo) {
@@ -48,19 +50,17 @@ function converterParaFormatoCaixa(pedido, carroInfo) {
     return caixa;
 }
 
-
 // --- ROTAS DA API ---
+app.get('/', async (req, res) => res.json({ mensagem: 'API Automod Sprint03 FINALIZADA!' }));
 
-app.get('/', async (req, res) => res.json({ mensagem: '🚀 API Automod a funcionar!' }));
-
-// Rotas GET
+// === CATÁLOGO ===
 app.get('/api/carros', async (req, res) => {
     try {
         const query = `SELECT c.id, c.nome, cat.nome AS categoria, c.imagem_catalogo_url AS image FROM carros c JOIN categorias cat ON c.categoria_id = cat.id;`;
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
-        console.error('🛑 ERRO AO BUSCAR CARROS:', err.stack);
+        console.error('ERRO AO BUSCAR CARROS:', err.stack);
         res.status(500).json({ erro: 'Não foi possível buscar os carros.' });
     }
 });
@@ -73,14 +73,14 @@ app.get('/api/carros/:id', async (req, res) => {
         if (resultado.rows.length > 0) res.json(resultado.rows[0]);
         else res.status(404).json({ erro: 'Carro não encontrado.' });
     } catch (err) {
-        console.error('🛑 ERRO AO BUSCAR CARRO POR ID:', err.stack);
+        console.error('ERRO AO BUSCAR CARRO POR ID:', err.stack);
         res.status(500).json({ erro: 'Não foi possível buscar o carro solicitado.' });
     }
 });
 
+// === PEDIDOS ===
 app.get('/api/pedidos/historico', async (req, res) => {
     try {
-        // ATUALIZAÇÃO SPRINT 3: Adicionado "p.slot_expedicao" à consulta
         const query = `
             SELECT p.id, c.nome AS carro_nome, p.criado_em, p.status, p.valor, p.slot_expedicao
             FROM pedidos p JOIN carros c ON p.carro_id = c.id
@@ -90,7 +90,7 @@ app.get('/api/pedidos/historico', async (req, res) => {
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
-        res.status(500).json({ erro: 'Não foi possível buscar o histórico de pedidos.' });
+        res.status(500).json({ erro: 'Não foi possível buscar o histórico.' });
     }
 });
 
@@ -100,196 +100,183 @@ app.get('/api/pedidos/carrinho', async (req, res) => {
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
-        res.status(500).json({ erro: 'Não foi possível buscar os itens do carrinho.' });
+        res.status(500).json({ erro: 'Não foi possível buscar o carrinho.' });
     }
 });
 
-// Rota POST para criar pedido
+// === CRIAR PEDIDO ===
 app.post('/api/pedidos', async (req, res) => {
     const { carroId, personalizacoes, valor } = req.body;
     if (!carroId || !personalizacoes || !valor) {
-        return res.status(400).json({ erro: 'Dados do pedido incompletos.' });
+        return res.status(400).json({ erro: 'Dados incompletos.' });
     }
     try {
         const { combustivel, cambio, cor_externa, acabamento, material_externo, aerofolio, roda, tracao, material_interno, iluminacao } = personalizacoes;
-        const query = `INSERT INTO pedidos (carro_id, valor, status, combustivel, cambio, cor_externa, acabamento, material_externo, aerofolio, roda, tracao, material_interno, iluminacao) VALUES ($1, $2, 'No carrinho', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *;`;
+        const query = `INSERT INTO pedidos (carro_id, valor, status, combustivel, cambio, cor_externa, acabamento, material_externo, aerofolio, roda, tracao, material_interno, iluminacao) 
+                       VALUES ($1, $2, 'No carrinho', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *;`;
         const values = [carroId, valor, combustivel, cambio, cor_externa, acabamento, material_externo, aerofolio, roda, tracao, material_interno, iluminacao];
         const resultado = await db.query(query, values);
         res.status(201).json(resultado.rows[0]);
     } catch (err) {
-        console.error('🛑 ERRO AO CRIAR O PEDIDO:', err.stack);
+        console.error('ERRO AO CRIAR PEDIDO:', err.stack);
         res.status(500).json({ erro: 'Não foi possível salvar o pedido.' });
     }
 });
 
-// Rota POST para enviar para produção
+// === ENVIAR PARA PRODUÇÃO ===
 app.post('/api/pedidos/:id/produzir', async (req, res) => {
     const { id } = req.params;
     try {
-        const checkExistente = await db.query("SELECT status FROM pedidos WHERE id = $1 AND status != 'No carrinho'", [id]);
-        if (checkExistente.rows.length > 0) {
-            console.warn(`⚠️ Tentativa de reenviar pedido ${id} que já está em processamento (${checkExistente.rows[0].status}).`);
-            return res.status(409).json({ erro: `Este pedido (${checkExistente.rows[0].status}) já foi processado.` });
+        // Evita reenvio
+        const jaEnviado = await db.query("SELECT status FROM pedidos WHERE id = $1 AND status != 'No carrinho'", [id]);
+        if (jaEnviado.rows.length > 0) {
+            return res.status(409).json({ erro: `Pedido já está ${jaEnviado.rows[0].status}` });
         }
-        const resultadoPedido = await db.query( `SELECT p.*, c.num_blocos, c.id as carro_id, cat.nome as categoria FROM pedidos p JOIN carros c ON p.carro_id = c.id JOIN categorias cat ON c.categoria_id = cat.id WHERE p.id = $1`, [id] );
-        if (resultadoPedido.rows.length === 0) return res.status(404).json({ erro: 'Pedido não encontrado.' });
 
-        const pedidoDoBanco = resultadoPedido.rows[0];
-        const caixaParaMaquina = converterParaFormatoCaixa(pedidoDoBanco, pedidoDoBanco);
+        const pedido = (await db.query(`
+            SELECT p.*, c.num_blocos, c.id as carro_id 
+            FROM pedidos p 
+            JOIN carros c ON p.carro_id = c.id 
+            WHERE p.id = $1`, [id])).rows[0];
 
-        const middlewarePayload = {
+        if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado.' });
+
+        const caixa = converterParaFormatoCaixa(pedido, pedido);
+
+        // CALLBACK PÚBLICO!
+        const callbackUrl = `${CALLBACK_BASE}/api/pedidos/callback/${id}`;
+
+        const payload = {
             payload: {
-                orderId: `PEDIDO-${pedidoDoBanco.id}`,
-                sku: `CARRO-${pedidoDoBanco.carro_id}`,
-                caixa: caixaParaMaquina
+                orderId: `PEDIDO-${pedido.id}`,
+                sku: `CARRO-${pedido.carro_id}`,
+                caixa
             },
-            callbackUrl: `http://localhost:3001/api/pedidos/callback/${id}`
+            callbackUrl
         };
 
-                // URL INTELIGENTE: funciona no Render E no teu PC local
-        const MIDDLEWARE_URL = process.env.NODE_ENV === 'production'
-            ? 'http://localhost:3001'   // Render (mock interno)
-            : 'http://localhost:3000';  // Teu PC (mock completo)
+        // TROCA AQUI PRA MÁQUINA REAL (só mudar a variável)
+        const USE_REAL_MACHINE = true;
+        const MIDDLEWARE_URL = USE_REAL_MACHINE
+            ? 'http://52.1.197.112:3000'
+            : 'http://localhost:3001';
 
-        const responseMiddleware = await axios.post(`${MIDDLEWARE_URL}/queue/items`, middlewarePayload);
-       //const responseMiddleware = await axios.post('http://52.1.197.112:3000/queue/items ', middlewarePayload);
-    
-        const jobId = responseMiddleware.data.id;
+        const response = await axios.post(`${MIDDLEWARE_URL}/queue/items`, payload);
+        const jobId = response.data.id;
 
         await db.query("UPDATE pedidos SET status = 'Enviado para produção', middleware_job_id = $1 WHERE id = $2", [jobId, id]);
 
-        console.log(`✅ Pedido ${id} enviado com sucesso! ID da Máquina (jobId):`, jobId);
-        res.json({ mensagem: 'Pedido enviado para a fila de produção com sucesso!', jobId: jobId });
+        res.json({ mensagem: 'Enviado para produção!', jobId });
     } catch (err) {
-        console.error(`🛑 ERRO AO ENVIAR O PEDIDO ${id} PARA A FILA:`, err.response ? err.response.data : err.message);
-        if (!res.headersSent) {
-             try { await db.query("UPDATE pedidos SET status = 'Erro ao enviar' WHERE id = $1", [id]); } 
-             catch (revertError) { console.error('🛑 ERRO AO REVERTER STATUS:', revertError.stack); }
-             res.status(500).json({ erro: 'Não foi possível enviar o pedido para a produção.' });
-        }
+        console.error('ERRO AO ENVIAR PARA PRODUÇÃO:', err.response?.data || err.message);
+        await db.query("UPDATE pedidos SET status = 'Erro ao enviar' WHERE id = $1", [id]).catch(() => {});
+        res.status(500).json({ erro: 'Falha ao enviar para produção.' });
     }
 });
 
-// Rota POST de Callback
+// === CALLBACK DA MÁQUINA (público) ===
 app.post('/api/pedidos/callback/:pedidoId', async (req, res) => {
     const { pedidoId } = req.params;
-    // ATUALIZAÇÃO SPRINT 3: Captura o 'slot' do corpo da requisição
-    const { status, slot } = req.body;
-
-    const statusValidos = ['Na fila', 'Enviado', 'Em produção', 'Concluído', 'Erro'];
-    const novoStatus = status && statusValidos.includes(status) ? status : 'Erro no callback';
+    const { status = 'Erro', slot } = req.body;
 
     try {
-        // ATUALIZAÇÃO SPRINT 3: O comando UPDATE agora salva o 'status' E o 'slot_expedicao'
         await db.query(
-            'UPDATE pedidos SET status = $1, slot_expedicao = $2 WHERE id = $3', 
-            [novoStatus, slot, pedidoId] // Passa o slot para o SQL
+            'UPDATE pedidos SET status = $1, slot_expedicao = $2, atualizado_em = NOW() WHERE id = $3',
+            [status, slot || null, pedidoId]
         );
-        
-        console.log(`✅ CALLBACK: Pedido ${pedidoId} atualizado para status: ${novoStatus}. Slot: ${slot || 'N/A'}`);
-        res.status(200).send('Callback recebido.');
+        console.log(`CALLBACK → Pedido ${pedidoId} | Status: ${status} | Slot: ${slot}`);
+        res.json({ ok: true });
     } catch (err) {
-        console.error(`🛑 ERRO NO CALLBACK PARA PEDIDO ${pedidoId}:`, err);
-        res.status(500).send('Erro no callback.');
+        console.error('ERRO NO CALLBACK:', err);
+        res.status(500).json({ erro: 'callback falhou' });
     }
 });
 
+// === CONFIRMAR ENTREGA + LIBERAR SLOT ===
+app.post('/api/pedidos/:id/entregar', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query("UPDATE pedidos SET status = 'Entregue', entregue_em = NOW() WHERE id = $1", [id]);
 
+        const { rows } = await db.query("SELECT slot_expedicao FROM pedidos WHERE id = $1", [id]);
+        const slot = rows[0]?.slot_expedicao;
 
-// Rota para limpar o carrinho todo
+        if (slot) {
+            const liberarUrl = `http://52.1.197.112:3000/estoque/${slot}`;
+            await fetch(liberarUrl, { method: 'DELETE' }).catch(() => {});
+            console.log(`Slot ${slot} liberado na máquina real`);
+        }
+
+        res.json({ sucesso: true, mensagem: "Entrega confirmada! Slot liberado." });
+    } catch (err) {
+        console.error('ERRO AO CONFIRMAR ENTREGA:', err);
+        res.status(500).json({ erro: err.message });
+    }
+});
+
+// === LIMPAR CARRINHO ===
 app.delete('/api/pedidos/carrinho', async (req, res) => {
     try {
         await db.query("DELETE FROM pedidos WHERE status = 'No carrinho'");
         res.status(204).send();
     } catch (err) {
-        console.error('🛑 ERRO AO LIMPAR O CARRINHO:', err.stack);
-        res.status(500).json({ erro: 'Não foi possível limpar o carrinho.' });
+        res.status(500).json({ erro: 'Erro ao limpar carrinho' });
     }
 });
 
-// Rota para apagar um item único do carrinho
 app.delete('/api/pedidos/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const resultado = await db.query("DELETE FROM pedidos WHERE id = $1 AND status = 'No carrinho' RETURNING *", [id]);
-        if (resultado.rowCount === 0) {
-            return res.status(404).json({ erro: 'Item do carrinho não encontrado ou já processado.' });
-        }
+        const result = await db.query("DELETE FROM pedidos WHERE id = $1 AND status = 'No carrinho' RETURNING *", [id]);
+        if (result.rowCount === 0) return res.status(404).json({ erro: 'Item não encontrado ou já processado' });
         res.status(204).send();
     } catch (err) {
-        console.error('🛑 ERRO AO APAGAR ITEM DO CARRINHO:', err.stack);
-        res.status(500).json({ erro: 'Não foi possível remover o item do carrinho.' });
+        res.status(500).json({ erro: 'Erro ao remover item' });
     }
 });
 
-// ===============================================
-// MOCK DA MÁQUINA - SLOTS DE 1 A 12
-// ===============================================
+// === MOCK DA MÁQUINA (slots 1-12) ===
 const crypto = require('crypto');
 const jobQueue = {};
 
-// POST - recebe pedido do backend
 app.post('/queue/items', (req, res) => {
-    if (!req.body?.payload?.caixa) {
-        return res.status(400).json({ error: "Payload inválido" });
-    }
+    if (!req.body?.payload?.caixa) return res.status(400).json({ error: "Payload inválido" });
 
     const jobId = crypto.randomBytes(12).toString('hex');
     const { payload, callbackUrl } = req.body;
 
-    jobQueue[jobId] = {
-        id: jobId,
-        status: 'Na fila',
-        payload,
-        callbackUrl,
-        criadoEm: new Date()
-    };
-
+    jobQueue[jobId] = { id: jobId, status: 'Na fila', payload, callbackUrl, criadoEm: new Date() };
     res.status(201).json({ id: jobId });
 
     setTimeout(async () => {
         if (jobQueue[jobId]) {
             jobQueue[jobId].status = 'Concluído';
             jobQueue[jobId].concluidoEm = new Date();
-
-            // SLOT DE 1 A 12
             const slot = String(Math.floor(Math.random() * 12) + 1);
-
             jobQueue[jobId].slot = slot;
 
-            try {
-                await fetch(callbackUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'Concluído', slot })
-                });
-            } catch (err) {
-                // silencioso
-            }
+            await fetch(callbackUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Concluído', slot })
+            }).catch(() => {});
         }
     }, 5000);
 });
 
-// GET - lista jobs com slot real
 app.get('/queue/items', (req, res) => {
-    const jobs = Object.values(jobQueue).map(job => ({
-        id: job.id,
-        status: job.status,
-        orderId: job.payload?.orderId || null,
-        slot: job.slot || null,
-        concluido_em: job.concluidoEm || null
+    const jobs = Object.values(jobQueue).map(j => ({
+        id: j.id,
+        status: j.status,
+        orderId: j.payload?.orderId || null,
+        slot: j.slot || null,
+        concluido_em: j.concluidoEm || null
     }));
-
-    res.json({
-        total: jobs.length,
-        jobs: jobs
-    });
+    res.json({ total: jobs.length, jobs });
 });
-// --- INICIALIZAÇÃO DO SERVIDOR ---
+
+// === INICIALIZAÇÃO ===
 app.listen(PORTA, () => {
-    console.log(`✅ Servidor a rodar em http://localhost:${PORTA}`);
+    console.log(`API rodando na porta ${PORTA}`);
+    console.log(`Callback público: ${CALLBACK_BASE}`);
 });
-
-
-
-
