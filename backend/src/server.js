@@ -146,7 +146,12 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
             callbackUrl: `http://localhost:3001/api/pedidos/callback/${id}`
         };
 
-        const responseMiddleware = await axios.post('http://localhost:3000/queue/items', middlewarePayload);
+                // URL INTELIGENTE: funciona no Render E no teu PC local
+        const MIDDLEWARE_URL = process.env.NODE_ENV === 'production'
+            ? 'http://localhost:3001'   // Render (mock interno)
+            : 'http://localhost:3000';  // Teu PC (mock completo)
+
+        const responseMiddleware = await axios.post(`${MIDDLEWARE_URL}/queue/items`, middlewarePayload);
        //const responseMiddleware = await axios.post('http://52.1.197.112:3000/queue/items ', middlewarePayload);
     
         const jobId = responseMiddleware.data.id;
@@ -215,6 +220,71 @@ app.delete('/api/pedidos/:id', async (req, res) => {
         console.error('🛑 ERRO AO APAGAR ITEM DO CARRINHO:', err.stack);
         res.status(500).json({ erro: 'Não foi possível remover o item do carrinho.' });
     }
+});
+
+// ===============================================
+// MOCK COMPLETO DA MÁQUINA (VERSÃO GUI DELUXE 2025)
+// Funciona no Render e no teu PC local
+// ===============================================
+const crypto = require('crypto');
+const jobQueue = {};
+
+// ROTA DO MOCK (recebe o pedido do backend)
+app.post('/queue/items', (req, res) => {
+    console.log("\n🎯 MOCK RENDER: NOVO PEDIDO CHEGOU PRA PRODUÇÃO!");
+
+    if (!req.body?.payload?.caixa) {
+        console.error("❌ Payload zuado ou sem 'caixa'");
+        return res.status(400).json({ error: "Payload inválido" });
+    }
+
+    const jobId = crypto.randomBytes(12).toString('hex');
+    const { payload, callbackUrl } = req.body;
+
+    jobQueue[jobId] = {
+        id: jobId,
+        status: 'Na fila',
+        payload,
+        callbackUrl,
+        criadoEm: new Date()
+    };
+
+    console.log(`✅ Job ${jobId} criado. Total na fila: ${Object.keys(jobQueue).length}`);
+
+    res.status(201).json({ id: jobId });
+
+    // CALLBACK AUTOMÁTICO EM 5 SEGUNDOS
+    setTimeout(async () => {
+        if (jobQueue[jobId]) {
+            jobQueue[jobId].status = 'Concluído';
+            const slots = ['Slot A1', 'Slot B2', 'Slot C3', 'Área 4', 'Slot X9', 'Linha 7', 'Slot Z10'];
+            const slot = slots[Math.floor(Math.random() * slots.length)];
+
+            try {
+                await fetch(callbackUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'Concluído', slot })
+                });
+                console.log(`🎉 CALLBACK ENVIADO → Job ${jobId} | Slot: ${slot}`);
+            } catch (err) {
+                console.log('⚠️ Callback falhou (normal se o server reiniciou)');
+            }
+        }
+    }, 5000);
+});
+
+// BONUS: abre no navegador pra ver a fila
+app.get('/queue/items', (req, res) => {
+    res.json({
+        total: Object.keys(jobQueue).length,
+        jobs: Object.values(jobQueue).map(j => ({
+            id: j.id,
+            status: j.status,
+            orderId: j.payload?.orderId,
+            slot: j.status === 'Concluído' ? 'gerado no callback' : 'aguardando'
+        }))
+    });
 });
 // --- INICIALIZAÇÃO DO SERVIDOR ---
 app.listen(PORTA, () => {
