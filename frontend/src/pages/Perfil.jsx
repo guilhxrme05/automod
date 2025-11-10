@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './Perfil.css';
 
+// <<< 1. A URL DA API VEM DA VARIÁVEL DE AMBIENTE >>>
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 // --- Ícones (sem alterações) ---
 const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
 const BoxIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>;
@@ -35,7 +38,8 @@ const Perfil = () => {
     setLoading(prev => ({ ...prev, orders: true }));
     setError(prev => ({ ...prev, orders: null }));
     try {
-      const response = await fetch(`http://localhost:3001/api/pedidos/historico`);
+      // A rota /historico já foi atualizada no server.js para enviar o slot_expedicao
+      const response = await fetch(`${API_URL}/api/pedidos/historico`);
       if (!response.ok) throw new Error('Falha ao buscar o histórico.');
       const data = await response.json();
       setOrders(data);
@@ -50,7 +54,7 @@ const Perfil = () => {
     setLoading(prev => ({ ...prev, cart: true }));
     setError(prev => ({ ...prev, cart: null }));
     try {
-      const response = await fetch(`http://localhost:3001/api/pedidos/carrinho`);
+      const response = await fetch(`${API_URL}/api/pedidos/carrinho`);
       if (!response.ok) throw new Error('Falha ao buscar itens do carrinho.');
       const data = await response.json();
       setCartItems(data);
@@ -64,7 +68,7 @@ const Perfil = () => {
   const handleRemoveItem = async (itemId) => {
     if (window.confirm("Tem a certeza de que quer remover este item do carrinho?")) {
         try {
-            const response = await fetch(`http://localhost:3001/api/pedidos/${itemId}`, { method: 'DELETE' });
+            const response = await fetch(`${API_URL}/api/pedidos/${itemId}`, { method: 'DELETE' });
             if (!response.ok) throw new Error("Falha ao remover o item.");
             setCartItems(prev => prev.filter(item => item.id !== itemId));
         } catch (err) {
@@ -76,7 +80,7 @@ const Perfil = () => {
   const handleClearCart = async () => {
     if (window.confirm("Tem a certeza de que quer limpar todos os itens do carrinho?")) {
         try {
-            const response = await fetch(`http://localhost:3001/api/pedidos/carrinho`, { method: 'DELETE' });
+            const response = await fetch(`${API_URL}/api/pedidos/carrinho`, { method: 'DELETE' });
             if (!response.ok) throw new Error("Falha ao limpar o carrinho.");
             setCartItems([]);
         } catch (err) {
@@ -89,7 +93,7 @@ const Perfil = () => {
     setLoading(prev => ({ ...prev, produce: orderId }));
     setError(prev => ({ ...prev, produce: null }));
     try {
-        const response = await fetch(`http://localhost:3001/api/pedidos/${orderId}/produzir`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/api/pedidos/${orderId}/produzir`, { method: 'POST' });
         if (!response.ok) {
              const errorData = await response.json();
              throw new Error(errorData.erro || 'Falha ao enviar para a produção.');
@@ -133,7 +137,6 @@ const Perfil = () => {
   return (
     <div className="profile-container">
       <aside className="profile-sidebar">
-        {/* --- CÓDIGO DA SIDEBAR QUE ESTAVA EM FALTA --- */}
         <div className="user-info">
           <img src={userData.avatar} alt="Avatar do utilizador" className="user-avatar" />
           <h2>{userData.name}</h2>
@@ -151,13 +154,11 @@ const Perfil = () => {
           </button>
           <button className="logout-button"> <LogoutIcon /> Sair </button>
         </nav>
-        {/* --- FIM DO CÓDIGO EM FALTA --- */}
       </aside>
 
       <main className="profile-content">
         {activeTab === 'perfil' && (
           <section id="perfil">
-            {/* --- CÓDIGO DO FORMULÁRIO QUE ESTAVA EM FALTA --- */}
             <h1>Detalhes do Perfil</h1>
             <p className="section-description">Atualize as suas informações pessoais aqui.</p>
             <form onSubmit={handleSaveChanges} className="profile-form">
@@ -173,7 +174,6 @@ const Perfil = () => {
                 ) : (<button type="button" className="button-primary" onClick={handleEditToggle}>Editar Perfil</button>)}
               </div>
             </form>
-            {/* --- FIM DO CÓDIGO EM FALTA --- */}
           </section>
         )}
 
@@ -228,11 +228,20 @@ const Perfil = () => {
             <p className="section-description">Acompanhe o estado dos seus carros personalizados.</p>
             <div className="orders-table-container">
               <table className="orders-table">
-                <thead><tr><th>ID</th><th>Carro</th><th>Data</th><th>Estado</th><th>Valor</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Carro</th>
+                        <th>Data</th>
+                        <th>Estado</th>
+                        <th>Valor</th>
+                        <th>Slot</th> {/* <<< MUDANÇA AQUI (1/2) >>> */}
+                    </tr>
+                </thead>
                 <tbody>
-                  {loading.orders && <tr><td colSpan="5">A carregar o histórico...</td></tr>}
-                  {error.orders && <tr><td colSpan="5" className="error-message">{error.orders}</td></tr>}
-                  {!loading.orders && orders.length === 0 && <tr><td colSpan="5">Você ainda não tem pedidos finalizados.</td></tr>}
+                  {loading.orders && <tr><td colSpan="6">A carregar o histórico...</td></tr>}
+                  {error.orders && <tr><td colSpan="6" className="error-message">{error.orders}</td></tr>}
+                  {!loading.orders && orders.length === 0 && <tr><td colSpan="6">Você ainda não tem pedidos finalizados.</td></tr>}
                   {orders.map(order => (
                     <tr key={order.id}>
                       <td>#{String(order.id).padStart(5, '0')}</td>
@@ -240,6 +249,7 @@ const Perfil = () => {
                       <td>{formatarData(order.criado_em)}</td>
                       <td><span className={`status-badge status-${order.status.replace(/\s+/g, '-').toLowerCase()}`}>{order.status}</span></td>
                       <td>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.valor)}</td>
+                      <td>{order.slot_expedicao || '---'}</td> {/* <<< MUDANÇA AQUI (2/2) >>> */}
                     </tr>
                   ))}
                 </tbody>
@@ -253,4 +263,3 @@ const Perfil = () => {
 };
 
 export default Perfil;
-

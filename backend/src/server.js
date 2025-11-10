@@ -80,7 +80,13 @@ app.get('/api/carros/:id', async (req, res) => {
 
 app.get('/api/pedidos/historico', async (req, res) => {
     try {
-        const query = `SELECT p.id, c.nome AS carro_nome, p.criado_em, p.status, p.valor FROM pedidos p JOIN carros c ON p.carro_id = c.id WHERE p.status != 'No carrinho' ORDER BY p.criado_em DESC;`;
+        // ATUALIZAÇÃO SPRINT 3: Adicionado "p.slot_expedicao" à consulta
+        const query = `
+            SELECT p.id, c.nome AS carro_nome, p.criado_em, p.status, p.valor, p.slot_expedicao
+            FROM pedidos p JOIN carros c ON p.carro_id = c.id
+            WHERE p.status != 'No carrinho'
+            ORDER BY p.criado_em DESC;
+        `;
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
@@ -140,8 +146,8 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
             callbackUrl: `http://localhost:3001/api/pedidos/callback/${id}`
         };
 
-        //const responseMiddleware = await axios.post('http://localhost:3000/queue/items', middlewarePayload);
-       const responseMiddleware = await axios.post('http://52.1.197.112:3000/queue/items ', middlewarePayload);
+        const responseMiddleware = await axios.post('http://localhost:3000/queue/items', middlewarePayload);
+       //const responseMiddleware = await axios.post('http://52.1.197.112:3000/queue/items ', middlewarePayload);
     
         const jobId = responseMiddleware.data.id;
 
@@ -162,11 +168,19 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
 // Rota POST de Callback
 app.post('/api/pedidos/callback/:pedidoId', async (req, res) => {
     const { pedidoId } = req.params;
+    // ATUALIZAÇÃO SPRINT 3: Captura o 'slot' do corpo da requisição
     const { status, slot } = req.body;
+
     const statusValidos = ['Na fila', 'Enviado', 'Em produção', 'Concluído', 'Erro'];
     const novoStatus = status && statusValidos.includes(status) ? status : 'Erro no callback';
+
     try {
-        await db.query('UPDATE pedidos SET status = $1 WHERE id = $2', [novoStatus, pedidoId]);
+        // ATUALIZAÇÃO SPRINT 3: O comando UPDATE agora salva o 'status' E o 'slot_expedicao'
+        await db.query(
+            'UPDATE pedidos SET status = $1, slot_expedicao = $2 WHERE id = $3', 
+            [novoStatus, slot, pedidoId] // Passa o slot para o SQL
+        );
+        
         console.log(`✅ CALLBACK: Pedido ${pedidoId} atualizado para status: ${novoStatus}. Slot: ${slot || 'N/A'}`);
         res.status(200).send('Callback recebido.');
     } catch (err) {
@@ -174,7 +188,6 @@ app.post('/api/pedidos/callback/:pedidoId', async (req, res) => {
         res.status(500).send('Erro no callback.');
     }
 });
-
 
 
 

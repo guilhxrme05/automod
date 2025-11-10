@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './Personalizacao.css';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Estrutura de opções com as 'key' corrigidas para corresponderem ao banco de dados
 const customizationOptions = [
@@ -64,7 +65,7 @@ const Personalizacao = () => {
   useEffect(() => {
     const fetchCarData = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/carros/${carId}`);
+        const response = await fetch(`${API_URL}/api/carros/${carId}`);
         if (!response.ok) throw new Error('Não foi possível encontrar o carro solicitado.');
         const data = await response.json();
         setCar(data);
@@ -120,7 +121,7 @@ const Personalizacao = () => {
       valor: 250000.00 
     };
     try {
-      const response = await fetch('http://localhost:3001/api/pedidos', {
+      const response = await fetch('https://api-node-automod.onrender.com/api/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pedidoData),

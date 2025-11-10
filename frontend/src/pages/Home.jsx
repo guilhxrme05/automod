@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Home.css';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 
 const SearchIcon = () => (
@@ -22,7 +23,7 @@ const Home = () => {
 
   
   useEffect(() => {
-    fetch('http://localhost:3001/api/carros')
+    fetch(`${API_URL}/api/carros`)
       .then(response => {
         if (!response.ok) {
           throw new Error('Falha na resposta da rede');
