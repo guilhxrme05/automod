@@ -112,19 +112,32 @@ const Perfil = () => {
 
   // NOVA FUNÇÃO: CONFIRMAR ENTREGA
   const confirmarEntrega = async (pedidoId) => {
-    if (!confirm('Confirmar que recebeu o carro? Isso libera o slot.')) return;
+    if (!window.confirm('Confirmar que recebeu o carro? Isso libera o slot.')) return;
+    
     setLoading(prev => ({ ...prev, entregar: pedidoId }));
+    
     try {
-      const res = await fetch(`${API_URL}/api/pedidos/${pedidoId}/entregar`, { method: 'POST' });
-      if (!res.ok) throw new Error('Falha ao confirmar');
-      alert('Entrega confirmada! Slot liberado.');
-      fetchOrders(); // atualiza a tabela
+        const response = await fetch(`${API_URL}/api/pedidos/${pedidoId}/entregar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'  // <--- ESSA LINHA FALTAVA!!!
+            },
+            body: JSON.stringify({}) // pode ser vazio mesmo
+        });
+
+        if (!response.ok) {
+            const erro = await response.json();
+            throw new Error(erro.erro || 'Falha na entrega');
+        }
+
+        alert('Entrega confirmada! Slot liberado.');
+        fetchOrders(); // atualiza a lista
     } catch (err) {
-      alert('Erro: ' + err.message);
+        alert('Erro: ' + err.message);
     } finally {
-      setLoading(prev => ({ ...prev, entregar: null }));
+        setLoading(prev => ({ ...prev, entregar: null }));
     }
-  };
+};
 
   const handleInputChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   const handleEditToggle = () => setIsEditing(!isEditing);

@@ -127,6 +127,7 @@ app.post('/api/pedidos', async (req, res) => {
 app.post('/api/pedidos/:id/produzir', async (req, res) => {
     const { id } = req.params;
     try {
+        // Evita reenvio
         const jaEnviado = await db.query("SELECT status FROM pedidos WHERE id = $1 AND status != 'No carrinho'", [id]);
         if (jaEnviado.rows.length > 0) {
             return res.status(409).json({ erro: `Pedido já está ${jaEnviado.rows[0].status}` });
@@ -142,6 +143,7 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
 
         const caixa = converterParaFormatoCaixa(pedido, pedido);
 
+        // CALLBACK PÚBLICO!
         const callbackUrl = `${CALLBACK_BASE}/api/pedidos/callback/${id}`;
 
         const payload = {
@@ -153,7 +155,8 @@ app.post('/api/pedidos/:id/produzir', async (req, res) => {
             callbackUrl
         };
 
-        const USE_REAL_MACHINE = process.env.USE_REAL_MACHINE === 'true';
+        // TROCA AQUI PRA MÁQUINA REAL (só mudar a variável)
+        const USE_REAL_MACHINE = false;
         const MIDDLEWARE_URL = USE_REAL_MACHINE
             ? 'http://52.1.197.112:3000'
             : 'http://localhost:3001';
@@ -189,7 +192,7 @@ app.post('/api/pedidos/callback/:pedidoId', async (req, res) => {
     }
 });
 
-// === CONFIRMAR ENTREGA + LIBERAR SLOT (MOCK E REAL) ===
+// === CONFIRMAR ENTREGA + LIBERAR SLOT ===
 app.post('/api/pedidos/:id/entregar', async (req, res) => {
     const { id } = req.params;
     try {
@@ -199,14 +202,9 @@ app.post('/api/pedidos/:id/entregar', async (req, res) => {
         const slot = rows[0]?.slot_expedicao;
 
         if (slot) {
-            const USE_REAL_MACHINE = process.env.USE_REAL_MACHINE === 'true';
-            const liberarUrl = USE_REAL_MACHINE
-                ? `http://52.1.197.112:3000/estoque/${slot}`
-                : `http://localhost:3001/liberar-slot/${slot}`;
-
-            await fetch(liberarUrl, { method: 'DELETE' }).catch(() => {
-                console.log(`Erro ao liberar slot ${slot}, ignorado`);
-            });
+            const liberarUrl = `http://52.1.197.112:3000/estoque/${slot}`;
+            await fetch(liberarUrl, { method: 'DELETE' }).catch(() => {});
+            console.log(`Slot ${slot} liberado na máquina real`);
         }
 
         res.json({ sucesso: true, mensagem: "Entrega confirmada! Slot liberado." });
@@ -237,7 +235,7 @@ app.delete('/api/pedidos/:id', async (req, res) => {
     }
 });
 
-// === MOCK DA MÁQUINA (slots 1-12) + LIBERAÇÃO DE SLOT ===
+// === MOCK DA MÁQUINA (slots 1-12) ===
 const crypto = require('crypto');
 const jobQueue = {};
 
@@ -275,12 +273,6 @@ app.get('/queue/items', (req, res) => {
         concluido_em: j.concluidoEm || null
     }));
     res.json({ total: jobs.length, jobs });
-});
-
-// MOCK: libera slot (resposta pro /entregar)
-app.delete('/liberar-slot/:slot', (req, res) => {
-    console.log(`MOCK: Slot ${req.params.slot} liberado`);
-    res.json({ ok: true });
 });
 
 // === INICIALIZAÇÃO ===
