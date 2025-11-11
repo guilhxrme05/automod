@@ -1,3 +1,4 @@
+// src/pages/Estoque.jsx
 import React, { useState, useEffect } from 'react';
 import './Estoque.css';
 
@@ -6,8 +7,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const Estoque = () => {
   const [cores, setCores] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editando, setEditando] = useState(null);
-  const [novoNome, setNovoNome] = useState('');
+  const [editando, setEditando] = useState(null); // id da cor sendo editada
+  const [tempData, setTempData] = useState({}); // dados temporários durante edição
 
   useEffect(() => {
     fetch(`${API_URL}/api/estoque/cores-chassis`)
@@ -18,30 +19,37 @@ const Estoque = () => {
       });
   }, []);
 
-  const repor = (id) => {
-    setCores(prev => prev.map(c => 
-      c.id === id ? { ...c, quantidade: c.quantidade + 10 } : c
-    ));
+  const entrarModoEdicao = (cor) => {
+    setEditando(cor.id);
+    setTempData({
+      nome: cor.nome,
+      quantidade: cor.quantidade
+    });
   };
 
-  const salvarNome = (id) => {
+  const salvarEdicao = (id) => {
     setCores(prev => prev.map(c => 
-      c.id === id ? { ...c, nome: novoNome } : c
+      c.id === id 
+        ? { ...c, nome: tempData.nome, quantidade: Number(tempData.quantidade) }
+        : c
     ));
     setEditando(null);
-    setNovoNome('');
+    setTempData({});
   };
 
-  const remover = (id) => {
-    if (window.confirm('Remover esta cor do estoque?')) {
-      setCores(prev => prev.filter(c => c.id !== id));
-    }
+  const cancelarEdicao = () => {
+    setEditando(null);
+    setTempData({});
+  };
+
+  const atualizarTemp = (campo, valor) => {
+    setTempData(prev => ({ ...prev, [campo]: valor }));
   };
 
   return (
     <div className="estoque-page">
       <h1>Gestão de Estoque - Cores de Chassis</h1>
-      <p>Controle das cores disponíveis para os blocos da máquina industrial</p>
+      <p>Edite nome e quantidade disponível conforme necessário</p>
 
       {loading ? (
         <p>Carregando estoque...</p>
@@ -52,7 +60,7 @@ const Estoque = () => {
               <th>Cor</th>
               <th>Nome</th>
               <th>Código Máquina</th>
-              <th>Quantidade</th>
+              <th>Quantidade em Estoque</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -60,45 +68,53 @@ const Estoque = () => {
             {cores.map(cor => (
               <tr key={cor.id}>
                 <td>
-                  <div style={{ 
-                    background: cor.hex, 
-                    width: 40, height: 40, 
-                    border: '2px solid #333',
-                    borderRadius: '8px',
-                    display: 'inline-block'
-                  }}></div>
+                  <div 
+                    className="cor-preview"
+                    style={{ background: cor.hex }}
+                  />
                 </td>
                 <td>
                   {editando === cor.id ? (
-                    <input 
-                      type="text" 
-                      value={novoNome} 
-                      onChange={(e) => setNovoNome(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && salvarNome(cor.id)}
+                    <input
+                      type="text"
+                      value={tempData.nome || ''}
+                      onChange={(e) => atualizarTemp('nome', e.target.value)}
+                      className="edit-input"
                       autoFocus
                     />
                   ) : (
-                    cor.nome
+                    <strong>{cor.nome}</strong>
                   )}
                 </td>
-                <td><strong>{cor.codigoBloco}</strong></td>
-                <td><strong>{cor.quantidade}</strong></td>
-                <td className="acoes">
-                  <button onClick={() => repor(cor.id)} className="btn-repor">
-                    +10
-                  </button>
+                <td><code>{cor.codigoBloco}</code></td>
+                <td>
                   {editando === cor.id ? (
-                    <button onClick={() => salvarNome(cor.id)} className="btn-salvar">
-                      Salvar
-                    </button>
+                    <input
+                      type="number"
+                      value={tempData.quantidade || ''}
+                      onChange={(e) => atualizarTemp('quantidade', e.target.value)}
+                      className="edit-input qty"
+                      min="0"
+                    />
                   ) : (
-                    <button onClick={() => { setEditando(cor.id); setNovoNome(cor.nome); }} className="btn-editar">
+                    <strong>{cor.quantidade}</strong>
+                  )}
+                </td>
+                <td className="acoes">
+                  {editando === cor.id ? (
+                    <>
+                      <button onClick={() => salvarEdicao(cor.id)} className="btn-salvar">
+                        Salvar
+                      </button>
+                      <button onClick={cancelarEdicao} className="btn-cancelar">
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => entrarModoEdicao(cor)} className="btn-editar">
                       Editar
                     </button>
                   )}
-                  <button onClick={() => remover(cor.id)} className="btn-remover">
-                    Remover
-                  </button>
                 </td>
               </tr>
             ))}
