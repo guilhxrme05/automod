@@ -1,88 +1,174 @@
+/* ---
+  ESTILO AUTOMOD v3.0 - Painel de Gestão de Estoque
+  Identidade: Tecnológica, Foco em Detalhes, Sofisticada
+--- */
+
+/* --- 1. VARIÁVEIS E CONFIGURAÇÃO GLOBAL --- */
+:root {
+  --cor-fundo-profundo: #0A0A0C;
+  --cor-fundo-painel: #141418;
+  --cor-amarelo-destaque: #FFD700;
+  --cor-amarelo-brilho: rgba(255, 215, 0, 0.15);
+  --cor-texto-principal: #F5F5F7;
+  --cor-texto-secundario: #A1A1A6;
+  --cor-borda-sutil: #2A2A2E;
+  --cor-verde-sucesso: #28a745;
+  --cor-vermelho-erro: #dc3545;
+}
+
+/* Importação da fonte e reset básico */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* --- 2. LAYOUT PRINCIPAL DA PÁGINA --- */
+/*
+  Nota: Assumindo que esta página está dentro do .page-content
+  do App.jsx, assim como o Perfil.jsx.
+  Estes estilos vão formatar o container interno.
+*/
 .estoque-page {
-  padding: 2rem;
-  max-width: 1100px;
+  font-family: 'Poppins', sans-serif;
+  max-width: 1200px;
   margin: 0 auto;
-  font-family: system-ui, -apple-system, sans-serif;
+  padding: 1rem 0;
+  animation: fadeIn 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .estoque-page h1 {
-  color: #1a1a1a;
-  margin-bottom: 0.5rem;
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--cor-texto-principal);
 }
 
 .estoque-page p {
-  color: #555;
-  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  color: var(--cor-texto-secundario);
+  margin-bottom: 3rem;
 }
 
+/* --- 3. TABELA DE ESTOQUE --- */
 .estoque-tabela {
   width: 100%;
   border-collapse: collapse;
-  background: white;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  background-color: var(--cor-fundo-painel);
   border-radius: 12px;
+  border: 1px solid var(--cor-borda-sutil);
   overflow: hidden;
 }
 
-.estoque-tabela th {
-  background: #0d47a1;
-  color: white;
-  padding: 1rem;
+.estoque-tabela th, .estoque-tabela td {
+  padding: 1.2rem 1.5rem;
   text-align: left;
-  font-weight: 600;
+  border-bottom: 1px solid var(--cor-borda-sutil);
 }
 
-.estoque-tabela td {
-  padding: 1rem;
-  border-bottom: 1px solid #eee;
+.estoque-tabela thead {
+  background-color: rgba(0,0,0,0.2);
+}
+
+.estoque-tabela th {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--cor-texto-secundario);
+}
+
+.estoque-tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.estoque-tabela tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.estoque-tabela tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.estoque-tabela td strong {
+  font-weight: 500;
+  color: var(--cor-texto-principal);
+}
+
+.estoque-tabela td code {
+  font-family: 'Menlo', 'Consolas', monospace;
+  background-color: var(--cor-fundo-profundo);
+  color: var(--cor-amarelo-destaque);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 .cor-preview {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #333;
+  width: 35px;
+  height: 35px;
+  border: 2px solid var(--cor-borda-sutil);
   border-radius: 8px;
   display: inline-block;
+  vertical-align: middle;
 }
 
+/* --- 4. INPUTS DE EDIÇÃO --- */
 .edit-input {
-  padding: 8px 12px;
-  border: 2px solid #1565C0;
+  background-color: var(--cor-fundo-profundo);
+  border: 1px solid var(--cor-borda-sutil);
   border-radius: 6px;
-  font-size: 1rem;
-  width: 140px;
+  padding: 0.6rem 0.8rem;
+  color: var(--cor-texto-principal);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  width: 160px;
+  transition: all 0.2s ease;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: var(--cor-amarelo-destaque);
+  box-shadow: 0 0 0 3px var(--cor-amarelo-brilho);
 }
 
 .edit-input.qty {
-  width: 80px;
+  width: 90px;
+}
+
+/* --- 5. BOTÕES DE AÇÃO --- */
+.acoes {
+  white-space: nowrap; /* Impede que os botões quebrem linha */
 }
 
 .acoes button {
-  margin: 0 6px;
-  padding: 8px 16px;
+  margin: 0 0.25rem;
+  padding: 0.6rem 1.2rem;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.2s;
-}
-
-.btn-editar {
-  background: #FF9800;
-  color: white;
-}
-
-.btn-salvar {
-  background: #4CAF50;
-  color: white;
-}
-
-.btn-cancelar {
-  background: #757575;
-  color: white;
+  font-size: 0.9rem;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s ease;
 }
 
 .acoes button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  filter: brightness(1.1);
+}
+
+.btn-editar {
+  background: var(--cor-amarelo-destaque);
+  color: var(--cor-fundo-profundo);
+}
+
+.btn-salvar {
+  background: var(--cor-verde-sucesso);
+  color: white;
+}
+
+.btn-cancelar {
+  background: var(--cor-texto-secundario);
+  color: var(--cor-fundo-profundo);
 }

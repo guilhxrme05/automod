@@ -96,11 +96,18 @@ app.get('/api/pedidos/historico', async (req, res) => {
 
 app.get('/api/pedidos/carrinho', async (req, res) => {
     try {
-        const query = `SELECT p.id, c.nome AS carro_nome, p.criado_em, p.status, p.valor FROM pedidos p JOIN carros c ON p.carro_id = c.id WHERE p.status = 'No carrinho' ORDER BY p.criado_em ASC;`;
+        // MUDANÇA AQUI: Trocamos 'p.id, c.nome...' por 'p.*' para pegar TODAS as colunas
+        const query = `
+            SELECT p.*, c.nome AS carro_nome 
+            FROM pedidos p 
+            JOIN carros c ON p.carro_id = c.id 
+            WHERE p.status = 'No carrinho' 
+            ORDER BY p.criado_em ASC;
+        `;
         const resultado = await db.query(query);
         res.json(resultado.rows);
     } catch (err) {
-        res.status(500).json({ erro: 'Não foi possível buscar o carrinho.' });
+        res.status(500).json({ erro: 'Não foi possível buscar os itens do carrinho.' });
     }
 });
 
