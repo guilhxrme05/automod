@@ -301,4 +301,88 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.ai-quiz-trigger-button {
+  background-color: var(--cor-amarelo-destaque);
+  color: var(--cor-fundo-profundo);
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 20px var(--cor-amarelo-brilho);
+}
+
+.ai-quiz-trigger-button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+}
+
+/* O fundo escuro que cobre a tela */
+.quiz-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+  animation: fadeInModal 0.3s ease;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* O "Card" que contém o quiz */
+.quiz-modal-content {
+  background-color: var(--cor-fundo-painel);
+  padding: 2.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--cor-borda-sutil);
+  width: 90%;
+  max-width: 900px; /* Mais largo para o quiz */
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  animation: slideInModal 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  
+  /* Garante o scroll DENTRO do card se o conteúdo for muito grande */
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes slideInModal {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.quiz-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--cor-texto-secundario);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.quiz-modal-close:hover {
+  color: var(--cor-texto-principal);
+}
+
+/* Ajustes no CSS do Quiz para ele "viver" dentro do modal */
+.quiz-modal-content .ai-quiz-container {
+  padding: 1rem;
+}
+
 

@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 require('dotenv').config();
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const db = require('./config/db');
 const mapeamentos = require('./mapeamentos');
@@ -12,6 +13,8 @@ const app = express();
 const PORTA = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-09-2025" });
 
 // URL PÚBLICA DO CALLBACK (máquina real consegue acessar)
 const CALLBACK_BASE = process.env.CALLBACK_BASE_URL || 'https://api-node-automod.onrender.com';
@@ -51,7 +54,7 @@ function converterParaFormatoCaixa(pedido, carroInfo) {
 }
 
 // --- ROTAS DA API ---
-app.get('/', async (req, res) => res.json({ mensagem: 'API Automod Sprint03 FINALIZADA!' }));
+app.get('/', async (req, res) => res.json({ mensagem: 'rodando xd' }));
 
 // === CATÁLOGO ===
 app.get('/api/carros', async (req, res) => {
@@ -108,6 +111,46 @@ app.get('/api/pedidos/carrinho', async (req, res) => {
         res.json(resultado.rows);
     } catch (err) {
         res.status(500).json({ erro: 'Não foi possível buscar os itens do carrinho.' });
+    }
+});
+// --- ROTA DA IA (SPRINT 3) ---
+app.post('/api/ia/recomendacao', async (req, res) => {
+    try {
+        // Recebe as respostas do quiz que o frontend enviou
+        const { respostas } = req.body; 
+
+        if (!respostas) {
+            return res.status(400).json({ erro: "Nenhuma resposta fornecida." });
+        }
+
+        // 1. Monta o Prompt para o Gemini
+        // (Este prompt é baseado no AICustomizationQuiz.jsx que te mandei)
+        let prompt = "Aja como um especialista em personalização de carros de luxo e esportivos da marca Automod.\n";
+        prompt += "Com base nas seguintes preferências de um cliente que respondeu a um quiz:\n";
+        if (respostas.estilo) prompt += `- Estilo preferido: ${respostas.estilo}\n`;
+        if (respostas.performance) prompt += `- Performance buscada: ${respostas.performance}\n`;
+        if (respostas.cores) prompt += `- Paleta de cores: ${respostas.cores}\n`;
+        if (respostas.interior) prompt += `- Detalhe interior: ${respostas.interior}\n`;
+        
+        prompt += "\nRecomende um *tipo* de carro do nosso catálogo (Popular, Esportivo ou Luxo) e sugira 3 a 5 personalizações específicas (ex: Cor Externa, Tipo de Roda, Acabamento, Material Interno) que se alinhem perfeitamente com este perfil.\n";
+        prompt += "Justifique brevemente cada sugestão.\n";
+        prompt += "Responda em português do Brasil, de forma entusiasta e premium, usando uma lista com marcadores (bullets).";
+
+        console.log("Enviando prompt para o Gemini...");
+
+        // 2. Chama a API do Gemini
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const textoRecomendacao = response.text();
+
+        console.log("Resposta do Gemini recebida.");
+
+        // 3. Envia a resposta de volta para o frontend
+        res.json({ recomendacao: textoRecomendacao });
+
+    } catch (err) {
+        console.error('🛑 ERRO NA API GEMINI:', err);
+        res.status(500).json({ erro: 'Não foi possível contactar a IA. Tente novamente.' });
     }
 });
 

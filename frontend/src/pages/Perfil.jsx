@@ -3,15 +3,14 @@ import './Perfil.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// --- Ícones ---
-const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
-const BoxIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>;
-const CartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>;
-const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;
-const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
-const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
-const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
-const EyeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>;
+// --- ÍCONES ---
+const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+const BoxIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2-0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline></svg>;
+const CartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>;
+const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;
+const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2 2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
+const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>;
+const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
 
 // Mock de usuário
 const userData = {
@@ -31,7 +30,7 @@ const formatarData = (dataISO) => {
   return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-// Nomes de personalizações legíveis
+// Dicionário de nomes legíveis
 const NomesPersonalizacoes = {
   combustivel: 'Combustível',
   cambio: 'Câmbio',
@@ -45,7 +44,23 @@ const NomesPersonalizacoes = {
   iluminacao: 'Tecnologia dos Faróis'
 };
 
-// Modal de detalhes
+// Conversão de hex para nome (simplificada)
+const corParaNome = (valor) => {
+  const cores = {
+    '#FFFFFF': 'Branco',
+    '#000000': 'Preto',
+    '#FF0000': 'Vermelho',
+    '#0000FF': 'Azul',
+    '#008000': 'Verde',
+    '#FFFF00': 'Amarelo',
+    '#808080': 'Cinza',
+    '#FFA500': 'Laranja',
+    '#800080': 'Roxo'
+  };
+  return cores[valor.toUpperCase()] || valor;
+};
+
+// Modal de detalhes (melhorado)
 const DetalhesModal = ({ item, onClose }) => {
   const personalizacoes = Object.keys(item)
     .filter(key => NomesPersonalizacoes[key] && item[key] !== null)
@@ -56,17 +71,24 @@ const DetalhesModal = ({ item, onClose }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <button className="modal-close-button" onClick={onClose}><CloseIcon /></button>
-        <h2>Detalhes do {item.carro_nome}</h2>
-        <div className="details-list">
+      <div className="modal-card" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}><CloseIcon /></button>
+        <h2 className="modal-title">{item.carro_nome}</h2>
+        <p className="modal-subtitle">Detalhes da Personalização</p>
+        <div className="modal-details">
           {personalizacoes.map(detalhe => (
-            <div key={detalhe.nome} className="detail-item">
-              <span className="detail-label">{detalhe.nome}:</span>
-              <span className="detail-value">{detalhe.valor}</span>
+            <div key={detalhe.nome} className="modal-detail-item">
+              <span className="modal-detail-label">{detalhe.nome}:</span>
+              <span className="modal-detail-value">
+                {detalhe.nome.toLowerCase().includes('cor')
+                  ? corParaNome(detalhe.valor)
+                  : detalhe.valor}
+              </span>
             </div>
           ))}
-          {personalizacoes.length === 0 && <p>Este item não possui detalhes de personalização.</p>}
+          {personalizacoes.length === 0 && (
+            <p className="no-details">Este carro não possui personalizações adicionais.</p>
+          )}
         </div>
       </div>
     </div>
@@ -90,8 +112,11 @@ const Perfil = () => {
   });
 
   useEffect(() => {
-    if (activeTab === 'pedidos') fetchOrders();
-    else if (activeTab === 'carrinho') fetchCartItems();
+    if (activeTab === 'pedidos') {
+      fetchOrders();
+    } else if (activeTab === 'carrinho') {
+      fetchCartItems();
+    }
   }, [activeTab]);
 
   const fetchOrders = async () => {
@@ -128,7 +153,7 @@ const Perfil = () => {
     if (!window.confirm('Remover este item?')) return;
     try {
       const res = await fetch(`${API_URL}/api/pedidos/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error("Falha ao remover o item.");
+      if (!res.ok) throw new Error('Falha ao remover o item.');
       setCartItems(prev => (prev ? prev.filter(i => i.id !== id) : []));
     } catch (err) {
       alert('Erro ao remover: ' + err.message);
@@ -205,9 +230,15 @@ const Perfil = () => {
     }
   };
 
-  const handleInputChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  const handleEditToggle = () => setIsEditing(!isEditing);
-  const handleSaveChanges = (e) => { e.preventDefault(); setIsEditing(false); };
+  const handleInputChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+  const handleEditToggle = () => setIsEditing(prev => !prev);
+  const handleSaveChanges = (e) => {
+    e.preventDefault();
+    setIsEditing(false);
+    // Aqui você pode adicionar chamada para salvar os dados no backend
+  };
 
   return (
     <>
@@ -237,7 +268,6 @@ const Perfil = () => {
         </aside>
 
         <main className="profile-content">
-          {/* PERFIL */}
           {activeTab === 'perfil' && (
             <section id="perfil">
               <h1>Detalhes do Perfil</h1>
@@ -246,19 +276,47 @@ const Perfil = () => {
                 <div className="form-grid">
                   <div className="form-group">
                     <label htmlFor="name">Nome Completo</label>
-                    <input type="text" id="name" name="name" value={formData.name} onChange={handleInputChange} disabled={!isEditing} />
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                    />
                   </div>
                   <div className="form-group">
                     <label htmlFor="email">Email</label>
-                    <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} disabled={!isEditing} />
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                    />
                   </div>
                   <div className="form-group">
                     <label htmlFor="phone">Telefone</label>
-                    <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleInputChange} disabled={!isEditing} />
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                    />
                   </div>
                   <div className="form-group">
                     <label htmlFor="address">Endereço</label>
-                    <input type="text" id="address" name="address" value={formData.address} onChange={handleInputChange} disabled={!isEditing} />
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                    />
                   </div>
                 </div>
                 <div className="form-actions">
@@ -275,7 +333,6 @@ const Perfil = () => {
             </section>
           )}
 
-          {/* CARRINHO */}
           {activeTab === 'carrinho' && (
             <section id="carrinho">
               <h1>Carrinho de Compras</h1>
@@ -296,14 +353,19 @@ const Perfil = () => {
                         <td>{formatarData(item.criado_em)}</td>
                         <td>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valor)}</td>
                         <td className="acoes-carrinho">
-                          <button className="btn-details" onClick={() => setDetailsModalItem(item)} title="Ver detalhes"><EyeIcon /></button>
-                          <button className="remove-item-button" onClick={() => handleRemoveItem(item.id)} title="Remover"><TrashIcon /></button>
+                          <button className="btn-details-text" onClick={() => setDetailsModalItem(item)}>
+                            Ver Detalhes
+                          </button>
+                          <button className="remove-item-button" onClick={() => handleRemoveItem(item.id)}>
+                            <TrashIcon />
+                          </button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+
               {cartItems.length > 0 && (
                 <div className="cart-summary">
                   <button className="button-secondary clear-cart-button" onClick={handleClearCart}>Limpar</button>
@@ -316,7 +378,6 @@ const Perfil = () => {
             </section>
           )}
 
-          {/* HISTÓRICO DE PEDIDOS */}
           {activeTab === 'pedidos' && (
             <section id="pedidos">
               <h1>Histórico de Pedidos</h1>
@@ -324,13 +385,7 @@ const Perfil = () => {
                 <table className="orders-table">
                   <thead>
                     <tr>
-                      <th>ID</th>
-                      <th>Carro</th>
-                      <th>Data</th>
-                      <th>Estado</th>
-                      <th>Valor</th>
-                      <th>Slot</th>
-                      <th>Ação</th>
+                      <th>ID</th><th>Carro</th><th>Data</th><th>Estado</th><th>Valor</th><th>Slot</th><th>Ação</th>
                     </tr>
                   </thead>
                   <tbody>
