@@ -27,16 +27,30 @@ const Estoque = () => {
     });
   };
 
-  const salvarEdicao = (id) => {
-    setCores(prev => prev.map(c => 
-      c.id === id 
-        ? { ...c, nome: tempData.nome, quantidade: Number(tempData.quantidade) }
-        : c
-    ));
+const salvarEdicao = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/api/estoque/cores-chassis/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: tempData.nome,
+        quantidade: Number(tempData.quantidade)
+      })
+    });
+
+    if (!response.ok) throw new Error('Falha ao salvar');
+
+    const corAtualizada = await response.json();
+    
+    // Atualiza o estado local
+    setCores(prev => prev.map(c => c.id === id ? corAtualizada : c));
+    
     setEditando(null);
     setTempData({});
-  };
-
+  } catch (err) {
+    alert('Erro ao salvar: ' + err.message);
+  }
+};
   const cancelarEdicao = () => {
     setEditando(null);
     setTempData({});

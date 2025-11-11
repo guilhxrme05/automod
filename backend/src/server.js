@@ -276,14 +276,31 @@ app.get('/queue/items', (req, res) => {
 });
 
 // GET - CORES DE CHASSIS DISPONÍVEIS (mock perfeito)
+// === ESTOQUE DE CORES DE CHASSIS - PERSISTENTE EM MEMÓRIA ===
+let estoqueChassis = [
+  { id: 1, nome: "Preto",    hex: "#000000", codigoBloco: 1, quantidade: 25 },
+  { id: 2, nome: "Vermelho", hex: "#C62828", codigoBloco: 2, quantidade: 18 },
+  { id: 3, nome: "Azul",     hex: "#1565C0", codigoBloco: 3, quantidade: 22 }
+];
+
+// GET - lista todas as cores
 app.get('/api/estoque/cores-chassis', (req, res) => {
-  res.json([
-    { id: 1, nome: "Preto",    hex: "#000000", codigoBloco: 1, quantidade: 25 },
-    { id: 2, nome: "Vermelho", hex: "#C62828", codigoBloco: 2, quantidade: 18 },
-    { id: 3, nome: "Azul",     hex: "#1565C0", codigoBloco: 3, quantidade: 22 }
-  ]);
+  res.json(estoqueChassis);
 });
 
+// PUT - atualiza nome e/ou quantidade de uma cor
+app.put('/api/estoque/cores-chassis/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const { nome, quantidade } = req.body;
+
+  const cor = estoqueChassis.find(c => c.id === id);
+  if (!cor) return res.status(404).json({ erro: "Cor não encontrada" });
+
+  if (nome !== undefined) cor.nome = nome;
+  if (quantidade !== undefined) cor.quantidade = Number(quantidade);
+
+  res.json(cor);
+});
 // === INICIALIZAÇÃO ===
 app.listen(PORTA, () => {
     console.log(`API rodando na porta ${PORTA}`);
