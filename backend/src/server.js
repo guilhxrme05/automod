@@ -275,6 +275,15 @@ app.get('/queue/items', (req, res) => {
     res.json({ total: jobs.length, jobs });
 });
 
+// GET - CORES DE CHASSIS DISPONÍVEIS (mock perfeito)
+app.get('/api/estoque/cores-chassis', (req, res) => {
+  res.json([
+    { id: 1, nome: "Preto",    hex: "#000000", codigoBloco: 1, quantidade: 25 },
+    { id: 2, nome: "Vermelho", hex: "#C62828", codigoBloco: 2, quantidade: 18 },
+    { id: 3, nome: "Azul",     hex: "#1565C0", codigoBloco: 3, quantidade: 22 }
+  ]);
+});
+
 // === INICIALIZAÇÃO ===
 app.listen(PORTA, () => {
     console.log(`API rodando na porta ${PORTA}`);

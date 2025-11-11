@@ -11,6 +11,7 @@ import Personalizacao from './pages/Personalizacao';
 import Registro from './pages/Registro';
 import Contato from './pages/Contato';
 import Perfil from './pages/Perfil';
+import Estoque from './pages/Estoque';
 
 function App() {
   return (
@@ -28,7 +29,8 @@ function App() {
           <Route path="/registro" element={<Registro />} />
           <Route path="/contato" element={<Contato />} />
           <Route path="/perfil" element={<Perfil />} />
-          {/* Adicione a rota do carrinho aqui se já a tiver */}
+          <Route path="/estoque" element={<Estoque />} />
+          
         </Routes>
       </main>
     </Router>
