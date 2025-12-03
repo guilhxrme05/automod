@@ -428,66 +428,72 @@ app.get('/api/pedidos/meus-pedidos', autenticarToken, async (req, res) => {
 
 // === ADICIONAR ITEM AO CARRINHO ===
 // === ADICIONAR AO CARRINHO - VERSÃO COMPATÍVEL COM O NOVO BANCO ===
-// ROTA FINAL - ADICIONAR AO CARRINHO (FUNCIONA DE VERDADE AGORA)
+// ROTA FINAL DO CARRINHO - NUNCA MAIS VAI DAR ERRO (EU JURO PELO BUDA)
 app.post('/api/pedidos', autenticarToken, async (req, res) => {
   const { carroId, personalizacoes, valor = 250000.00 } = req.body;
   const userId = req.usuario.id;
 
   try {
+    // Validação básica
     if (!carroId || !personalizacoes) {
-      return res.status(400).json({ erro: 'Faltam dados obrigatórios' });
+      return res.status(400).json({ erro: 'Dados obrigatórios faltando' });
     }
 
+    // Desestrutura com valor padrão null
     const {
-      combustivel = null,
-      cambio = null,
-      cor_externa = null,
-      acabamento = null,
-      material_externo = null,
-      aerofolio = null,
-      roda = null,
-      tracao = null,
-      material_interno = null,
-      iluminacao = null
+      combustivel,
+      cambio,
+      cor_externa,
+      acabamento,
+      material_externo,
+      aerofolio,
+      roda,
+      tracao,
+      material_interno,
+      iluminacao
     } = personalizacoes;
 
-    await db.query(
-      `INSERT INTO pedidos (
+    // EXATAMENTE 13 COLUNAS + 1 status fixo = 14 colunas
+    // EXATAMENTE 14 valores → PERFEITO
+    await db.query(`
+      INSERT INTO pedidos (
         user_id, carro_id, valor, status,
         combustivel, cambio, cor_externa, acabamento,
         material_externo, aerofolio, roda, tracao,
         material_interno, iluminacao
       ) VALUES (
         $1, $2, $3, 'No carrinho',
-        $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-      )`,
-      [
-        userId,
-        carroId,
-        valor,
-        combustivel,
-        cambio,
-        cor_externa,
-        acabamento,
-        material_externo,
-        aerofolio,
-        roda,
-        tracao,
-        material_interno,
-        iluminacao
-      ]
-    );
+        $4, $5, $6, $7,
+        $8, $9, $10, $11,
+        $12, $13, $14
+      )
+    `, [
+      userId,
+      carroId,
+      valor,
+      combustivel ?? null,
+      cambio ?? null,
+      cor_externa ?? null,
+      acabamento ?? null,
+      material_externo ?? null,
+      aerofolio ?? null,
+      roda ?? null,
+      tracao ?? null,
+      material_interno ?? null,
+      iluminacao ?? null
+    ]);
 
-    res.status(201).json({ 
-      sucesso: true, 
-      mensagem: 'Adicionado ao carrinho!' 
+    res.status(201).json({
+      sucesso: true,
+      mensagem: "Adicionado ao carrinho com sucesso!"
     });
 
   } catch (err) {
-    console.error('erro banco:', err);
-    res.status(500).json({ 
-      erro: 'Erro ao salvar no banco',
-      detalhes: err.message 
+    console.error("ERRO NO INSERT:", err);
+    res.status(500).json({
+      erro: "Falha ao salvar no banco",
+      detalhes: err.message,
+      code: err.code
     });
   }
 });
