@@ -428,6 +428,43 @@ app.get('/api/pedidos/meus-pedidos', autenticarToken, async (req, res) => {
     }
 });
 
+// === ADICIONAR ITEM AO CARRINHO ===
+app.post('/api/pedidos', autenticarToken, async (req, res) => {
+  const { carroId, personalizacoes, valor } = req.body;
+  const usuarioId = req.usuario.id; // vem do token
+
+  try {
+    // Validações básicas
+    if (!carroId || !personalizacoes) {
+      return res.status(400).json({ erro: 'Dados incompletos' });
+    }
+
+    // Verifica se o carro existe
+    const carroExiste = await db.query('SELECT id FROM carros WHERE id = $1', [carroId]);
+    if (carroExiste.rows.length === 0) {
+      return res.status(404).json({ erro: 'Carro não encontrado' });
+    }
+
+    // Insere o pedido como "No carrinho"
+    const resultado = await db.query(
+      `INSERT INTO pedidos 
+       (usuario_id, carro_id, personalizacoes, valor,valor, status) 
+       VALUES ($1, $2, $3, $4, 'No carrinho') 
+       RETURNING id, criado_em`,
+      [usuarioId, carroId, JSON.stringify(personalizacoes), valor || 250000.00]
+    );
+
+    res.status(201).json({
+      mensagem: 'Carro adicionado ao carrinho!',
+      pedido: resultado.rows[0]
+    });
+
+  } catch (err) {
+    console.error('ERRO AO ADICIONAR NO CARRINHO:', err);
+    res.status(500).json({ erro: 'Falha interna ao adicionar ao carrinho' });
+  }
+});
+
 
 // === INICIALIZAÇÃO ===
 app.listen(PORTA, () => {
