@@ -4,6 +4,11 @@ const cors = require('cors');
 const axios = require('axios');
 require('dotenv').config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// Adicione isso no seu .env depois: JWT_SECRET=uma_frase_muito_secreta_e_aleatoria
+const JWT_SECRET = process.env.JWT_SECRET || 'segredo_temporario_dev';
 
 const db = require('./config/db');
 const mapeamentos = require('./mapeamentos');
@@ -351,6 +356,78 @@ app.put('/api/estoque/cores-chassis/:id', (req, res) => {
 
   res.json(cor);
 });
+
+function autenticarToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Formato: "Bearer TOKEN"
+
+    if (!token) return res.status(401).json({ erro: 'Acesso negado' });
+
+    jwt.verify(token, JWT_SECRET, (err, usuario) => {
+        if (err) return res.status(403).json({ erro: 'Token inválido' });
+        req.usuario = usuario; // Salva o ID do usuário na requisição
+        next();
+    });
+}
+
+// === REGISTRO ===
+app.post('/api/auth/registro', async (req, res) => {
+    const { nome, email, senha, telefone, endereco } = req.body;
+    try {
+        // Criptografa a senha antes de salvar
+        const salt = await bcrypt.genSalt(10);
+        const senhaHash = await bcrypt.hash(senha, salt);
+
+        const result = await db.query(
+            'INSERT INTO usuarios (nome, email, senha_hash, telefone, endereco) VALUES ($1, $2, $3, $4, $5) RETURNING id, nome, email',
+            [nome, email, senhaHash, telefone, endereco]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        if (err.code === '23505') return res.status(400).json({ erro: 'Email já cadastrado' });
+        res.status(500).json({ erro: 'Erro ao registrar usuário' });
+    }
+});
+
+// === LOGIN ===
+app.post('/api/auth/login', async (req, res) => {
+    const { email, senha } = req.body;
+    try {
+        const result = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+        if (result.rows.length === 0) return res.status(400).json({ erro: 'Usuário não encontrado' });
+
+        const usuario = result.rows[0];
+        const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
+        if (!senhaValida) return res.status(400).json({ erro: 'Senha incorreta' });
+
+        // Gera o Token
+        const token = jwt.sign({ id: usuario.id, nome: usuario.nome }, JWT_SECRET, { expiresIn: '24h' });
+        
+        res.json({ token, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email } });
+    } catch (err) {
+        res.status(500).json({ erro: 'Erro no login' });
+    }
+});
+
+// === MEUS PEDIDOS (Rota Protegida) ===
+// Substitua ou adicione esta rota para pegar apenas os pedidos DO USUÁRIO LOGADO
+app.get('/api/pedidos/meus-pedidos', autenticarToken, async (req, res) => {
+    try {
+        const query = `
+            SELECT p.id, c.nome AS carro_nome, p.criado_em, p.status, p.valor 
+            FROM pedidos p 
+            JOIN carros c ON p.carro_id = c.id 
+            WHERE p.usuario_id = $1 
+            ORDER BY p.criado_em DESC;
+        `;
+        const resultado = await db.query(query, [req.usuario.id]);
+        res.json(resultado.rows);
+    } catch (err) {
+        res.status(500).json({ erro: 'Erro ao buscar pedidos' });
+    }
+});
+
+
 // === INICIALIZAÇÃO ===
 app.listen(PORTA, () => {
     console.log(`API rodando na porta ${PORTA}`);
