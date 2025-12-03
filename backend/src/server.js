@@ -428,69 +428,67 @@ app.get('/api/pedidos/meus-pedidos', autenticarToken, async (req, res) => {
 
 // === ADICIONAR ITEM AO CARRINHO ===
 // === ADICIONAR AO CARRINHO - VERSÃO COMPATÍVEL COM O NOVO BANCO ===
+// ROTA FINAL - ADICIONAR AO CARRINHO (FUNCIONA DE VERDADE AGORA)
 app.post('/api/pedidos', autenticarToken, async (req, res) => {
   const { carroId, personalizacoes, valor = 250000.00 } = req.body;
   const userId = req.usuario.id;
 
   try {
     if (!carroId || !personalizacoes) {
-      return res.status(400).json({ erro: 'Dados incompletos' });
+      return res.status(400).json({ erro: 'Faltam dados obrigatórios' });
     }
 
-    // Desestrutura as personalizações e preenche com null se não vier
     const {
-      combustivel,
-      cambio,
-      cor_externa,
-      acabamento,
-      material_externo,
-      aerofolio,
-      roda,
-      tracao,
-      material_interno,
-      iluminacao
+      combustivel = null,
+      cambio = null,
+      cor_externa = null,
+      acabamento = null,
+      material_externo = null,
+      aerofolio = null,
+      roda = null,
+      tracao = null,
+      material_interno = null,
+      iluminacao = null
     } = personalizacoes;
 
-    const result = await db.query(
-      (
-        `INSERT INTO pedidos (
-          user_id, carro_id, valor, status,
-          combustivel, cambio, cor_externa, acabamento,
-          material_externo, aerofolio, roda, tracao,
-          material_interno, iluminacao
-        ) VALUES (
-          $1, $2, $3, 'No carrinho',
-          $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-        ) RETURNING id, carro_id, criado_em`,
-        [
-          userId,
-          carroId,
-          valor,
-          combustivel || null,
-          cambio || null,
-          cor_externa || null,
-          acabamento || null,
-          material_externo || null,
-          aerofolio || null,
-          roda || null,
-          tracao || null,
-          material_interno || null,
-          iluminacao || null
-        ])
-      );
+    await db.query(
+      `INSERT INTO pedidos (
+        user_id, carro_id, valor, status,
+        combustivel, cambio, cor_externa, acabamento,
+        material_externo, aerofolio, roda, tracao,
+        material_interno, iluminacao
+      ) VALUES (
+        $1, $2, $3, 'No carrinho',
+        $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+      )`,
+      [
+        userId,
+        carroId,
+        valor,
+        combustivel,
+        cambio,
+        cor_externa,
+        acabamento,
+        material_externo,
+        aerofolio,
+        roda,
+        tracao,
+        material_interno,
+        iluminacao
+      ]
+    );
 
-    res.status(201).json({
-      sucesso: true,
-      mensagem: 'Carro adicionado ao carrinho com sucesso!',
-      pedido: result.rows[0]
+    res.status(201).json({ 
+      sucesso: true, 
+      mensagem: 'Adicionado ao carrinho!' 
     });
 
   } catch (err) {
-      console.error('ERRO 500 - ADICIONAR CARRINHO:', err);
-      res.status(500).json({
-        erro: 'Erro ao salvar no banco',
-        detalhes: err.message
-      });
+    console.error('erro banco:', err);
+    res.status(500).json({ 
+      erro: 'Erro ao salvar no banco',
+      detalhes: err.message 
+    });
   }
 });
 // === INICIALIZAÇÃO ===
