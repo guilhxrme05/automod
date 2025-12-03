@@ -452,7 +452,7 @@ app.post('/api/pedidos', autenticarToken, async (req, res) => {
     } = personalizacoes;
 
     const result = await db.query(
-      .query(
+      (
         `INSERT INTO pedidos (
           user_id, carro_id, valor, status,
           combustivel, cambio, cor_externa, acabamento,
