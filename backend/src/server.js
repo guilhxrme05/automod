@@ -102,22 +102,24 @@ app.get('/api/pedidos/historico', async (req, res) => {
     }
 });
 
-app.get('/api/pedidos/carrinho', async (req, res) => {
+// === CARRINHO (Agora protegido e filtrado por usuário) ===
+app.get('/api/pedidos/carrinho', autenticarToken, async (req, res) => {
     try {
-        // MUDANÇA AQUI: Trocamos 'p.id, c.nome...' por 'p.*' para pegar TODAS as colunas
         const query = `
             SELECT p.*, c.nome AS carro_nome 
             FROM pedidos p 
             JOIN carros c ON p.carro_id = c.id 
-            WHERE p.status = 'No carrinho' 
+            WHERE p.status = 'No carrinho' AND p.usuario_id = $1
             ORDER BY p.criado_em ASC;
         `;
-        const resultado = await db.query(query);
+        // Usa o ID do usuário que veio do token
+        const resultado = await db.query(query, [req.usuario.id]);
         res.json(resultado.rows);
     } catch (err) {
         res.status(500).json({ erro: 'Não foi possível buscar os itens do carrinho.' });
     }
 });
+
 // --- ROTA DA IA (SPRINT 3) ---
 app.post('/api/ia/recomendacao', async (req, res) => {
     try {
@@ -160,24 +162,23 @@ app.post('/api/ia/recomendacao', async (req, res) => {
 });
 
 // === CRIAR PEDIDO ===
-app.post('/api/pedidos', async (req, res) => {
-    const { carroId, personalizacoes, valor } = req.body;
-    if (!carroId || !personalizacoes || !valor) {
-        return res.status(400).json({ erro: 'Dados incompletos.' });
-    }
+// === CARRINHO (Agora protegido e filtrado por usuário) ===
+app.get('/api/pedidos/carrinho', autenticarToken, async (req, res) => {
     try {
-        const { combustivel, cambio, cor_externa, acabamento, material_externo, aerofolio, roda, tracao, material_interno, iluminacao } = personalizacoes;
-        const query = `INSERT INTO pedidos (carro_id, valor, status, combustivel, cambio, cor_externa, acabamento, material_externo, aerofolio, roda, tracao, material_interno, iluminacao) 
-                       VALUES ($1, $2, 'No carrinho', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *;`;
-        const values = [carroId, valor, combustivel, cambio, cor_externa, acabamento, material_externo, aerofolio, roda, tracao, material_interno, iluminacao];
-        const resultado = await db.query(query, values);
-        res.status(201).json(resultado.rows[0]);
+        const query = `
+            SELECT p.*, c.nome AS carro_nome 
+            FROM pedidos p 
+            JOIN carros c ON p.carro_id = c.id 
+            WHERE p.status = 'No carrinho' AND p.usuario_id = $1
+            ORDER BY p.criado_em ASC;
+        `;
+        // Usa o ID do usuário que veio do token
+        const resultado = await db.query(query, [req.usuario.id]);
+        res.json(resultado.rows);
     } catch (err) {
-        console.error('ERRO AO CRIAR PEDIDO:', err.stack);
-        res.status(500).json({ erro: 'Não foi possível salvar o pedido.' });
+        res.status(500).json({ erro: 'Não foi possível buscar os itens do carrinho.' });
     }
 });
-
 // === ENVIAR PARA PRODUÇÃO ===
 app.post('/api/pedidos/:id/produzir', async (req, res) => {
     const { id } = req.params;

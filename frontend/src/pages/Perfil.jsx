@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext'; // Importe o contexto
 import './Perfil.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-// --- ÍCONES ---
+// --- ÍCONES (Mantidos iguais) ---
 const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
 const BoxIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2-0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline></svg>;
 const CartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>;
@@ -11,17 +11,6 @@ const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" heig
 const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2 2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
 const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>;
 const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
-
-// Mock de usuário
-const userData = {
-  id: 1,
-  name: 'gui',
-  email: 'teste@email.com',
-  phone: '(48) 99999-9999',
-  address: 'Florianópolis, SC',
-  memberSince: '2025',
-  avatar: 'public/images/perfil.png'
-};
 
 // Função para formatar data
 const formatarData = (dataISO) => {
@@ -46,6 +35,7 @@ const NomesPersonalizacoes = {
 
 // Conversão de hex para nome (simplificada)
 const corParaNome = (valor) => {
+  if (!valor) return 'Padrão';
   const cores = {
     '#FFFFFF': 'Branco',
     '#000000': 'Preto',
@@ -60,7 +50,7 @@ const corParaNome = (valor) => {
   return cores[valor.toUpperCase()] || valor;
 };
 
-// Modal de detalhes (melhorado)
+// Modal de detalhes
 const DetalhesModal = ({ item, onClose }) => {
   const personalizacoes = Object.keys(item)
     .filter(key => NomesPersonalizacoes[key] && item[key] !== null)
@@ -96,6 +86,9 @@ const DetalhesModal = ({ item, onClose }) => {
 };
 
 const Perfil = () => {
+  const { user, logout, API_URL } = useContext(AuthContext); // Hooks do Contexto
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState('carrinho');
   const [isEditing, setIsEditing] = useState(false);
   const [orders, setOrders] = useState([]);
@@ -104,26 +97,54 @@ const Perfil = () => {
   const [error, setError] = useState({ orders: null, cart: null, produce: null, entregar: null });
   const [detailsModalItem, setDetailsModalItem] = useState(null);
 
+  // Inicializa o form com vazio, será preenchido pelo useEffect
   const [formData, setFormData] = useState({
-    name: userData.name,
-    email: userData.email,
-    phone: userData.phone,
-    address: userData.address
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
   });
 
+  // 1. Proteção de Rota + Carga de Dados do Usuário
   useEffect(() => {
+    if (!user) {
+      // Se não tiver usuário logado, manda pro login
+      navigate('/login');
+    } else {
+      // Se tiver, preenche o formulário
+      setFormData({
+        name: user.nome || '',
+        email: user.email || '',
+        phone: user.telefone || '',
+        address: user.endereco || ''
+      });
+    }
+  }, [user, navigate]);
+
+  // 2. Carga de Pedidos e Carrinho (Só se estiver logado)
+  useEffect(() => {
+    if (!user) return;
+
     if (activeTab === 'pedidos') {
       fetchOrders();
     } else if (activeTab === 'carrinho') {
       fetchCartItems();
     }
-  }, [activeTab]);
+  }, [activeTab, user]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const fetchOrders = async () => {
     setLoading(prev => ({ ...prev, orders: true }));
     setError(prev => ({ ...prev, orders: null }));
     try {
-      const res = await fetch(`${API_URL}/api/pedidos/historico`);
+      // IMPORTANTE: Agora usamos a rota "meus-pedidos" que filtra pelo token
+      const res = await fetch(`${API_URL}/api/pedidos/meus-pedidos`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       if (!res.ok) throw new Error('Falha ao buscar histórico');
       const data = await res.json();
       setOrders(data);
@@ -138,10 +159,21 @@ const Perfil = () => {
     setLoading(prev => ({ ...prev, cart: true }));
     setError(prev => ({ ...prev, cart: null }));
     try {
-      const res = await fetch(`${API_URL}/api/pedidos/carrinho`);
+      // Trazendo itens do carrinho (O Backend precisa filtrar por usuário também, idealmente)
+      // Por enquanto, vamos assumir que o backend já trata ou filtrar no front (não ideal)
+      // *Nota: Para produção, atualize o backend GET /carrinho para usar o token*
+      const res = await fetch(`${API_URL}/api/pedidos/carrinho`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      
       if (!res.ok) throw new Error('Falha ao buscar carrinho');
       const data = await res.json();
-      setCartItems(data);
+      
+      // Filtrando no front temporariamente para garantir que só vê os meus
+      // (O ideal é o backend fazer isso com WHERE usuario_id = $1)
+      const meusItens = data.filter(item => item.usuario_id === user.id);
+      setCartItems(meusItens);
+
     } catch (err) {
       setError(prev => ({ ...prev, cart: err.message }));
     } finally {
@@ -237,8 +269,11 @@ const Perfil = () => {
   const handleSaveChanges = (e) => {
     e.preventDefault();
     setIsEditing(false);
-    // Aqui você pode adicionar chamada para salvar os dados no backend
+    alert("Função de atualizar perfil será implementada em breve no backend!");
   };
+
+  // Se o user ainda não carregou, exibe loading ou nada
+  if (!user) return <div className="loading-screen">Carregando perfil...</div>;
 
   return (
     <>
@@ -249,9 +284,17 @@ const Perfil = () => {
       <div className="profile-container">
         <aside className="profile-sidebar">
           <div className="user-info">
-            <img src={userData.avatar} alt="Avatar" className="user-avatar" />
-            <h2>{userData.name}</h2>
-            <p>Membro desde {userData.memberSince}</p>
+            {/* Imagem Padrão ou Avatar Gerado com as Iniciais */}
+            <div className="user-avatar-placeholder" style={{
+                width: '80px', height: '80px', borderRadius: '50%', 
+                backgroundColor: '#333', color: '#fff', display: 'flex', 
+                alignItems: 'center', justifyContent: 'center', fontSize: '32px',
+                margin: '0 auto 15px'
+            }}>
+                {user.nome ? user.nome.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <h2>{user.nome}</h2>
+            <p>Membro da AutoMod</p>
           </div>
           <nav className="profile-nav">
             <button className={activeTab === 'perfil' ? 'active' : ''} onClick={() => setActiveTab('perfil')}>
@@ -263,7 +306,7 @@ const Perfil = () => {
             <button className={activeTab === 'pedidos' ? 'active' : ''} onClick={() => setActiveTab('pedidos')}>
               <BoxIcon /> Meus Pedidos
             </button>
-            <button className="logout-button"><LogoutIcon /> Sair</button>
+            <button className="logout-button" onClick={handleLogout}><LogoutIcon /> Sair</button>
           </nav>
         </aside>
 
@@ -271,7 +314,7 @@ const Perfil = () => {
           {activeTab === 'perfil' && (
             <section id="perfil">
               <h1>Detalhes do Perfil</h1>
-              <p className="section-description">Atualize as suas informações pessoais aqui.</p>
+              <p className="section-description">Suas informações pessoais.</p>
               <form onSubmit={handleSaveChanges} className="profile-form">
                 <div className="form-grid">
                   <div className="form-group">
@@ -293,7 +336,7 @@ const Perfil = () => {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
+                      disabled={true} // Email geralmente não se muda fácil
                     />
                   </div>
                   <div className="form-group">
@@ -390,7 +433,7 @@ const Perfil = () => {
                   </thead>
                   <tbody>
                     {loading.orders && <tr><td colSpan="7">Carregando...</td></tr>}
-                    {!loading.orders && orders.length === 0 && <tr><td colSpan="7">Nenhum pedido finalizado</td></tr>}
+                    {!loading.orders && orders.length === 0 && <tr><td colSpan="7">Nenhum pedido encontrado.</td></tr>}
                     {orders.map(order => (
                       <tr key={order.id}>
                         <td>#{String(order.id).padStart(5, '0')}</td>
