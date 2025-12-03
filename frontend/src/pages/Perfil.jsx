@@ -138,22 +138,26 @@ const Perfil = () => {
   };
 
   const fetchOrders = async () => {
-    setLoading(prev => ({ ...prev, orders: true }));
-    setError(prev => ({ ...prev, orders: null }));
-    try {
-      // IMPORTANTE: Agora usamos a rota "meus-pedidos" que filtra pelo token
-      const res = await fetch(`${API_URL}/api/pedidos/meus-pedidos`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (!res.ok) throw new Error('Falha ao buscar histórico');
-      const data = await res.json();
-      setOrders(data);
-    } catch (err) {
-      setError(prev => ({ ...prev, orders: err.message }));
-    } finally {
-      setLoading(prev => ({ ...prev, orders: false }));
-    }
-  };
+  setLoading(prev => ({ ...prev, orders: true }));
+  setError(prev => ({ ...prev, orders: null }));
+  try {
+    const res = await fetch(`${API_URL}/api/pedidos/meus-todos`, {
+      headers: { 
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!res.ok) throw new Error('Falha ao buscar histórico');
+    const data = await res.json();
+    setOrders(data);
+
+  } catch (err) {
+    setError(prev => ({ ...prev, orders: err.message }));
+  } finally {
+    setLoading(prev => ({ ...prev, orders: false }));
+  }
+};
 
   const fetchCartItems = async () => {
     setLoading(prev => ({ ...prev, cart: true }));
@@ -171,8 +175,8 @@ const Perfil = () => {
       
       // Filtrando no front temporariamente para garantir que só vê os meus
       // (O ideal é o backend fazer isso com WHERE usuario_id = $1)
-      const meusItens = data.filter(item => item.usuario_id === user.id);
-      setCartItems(meusItens);
+setCartItems(data);
+
 
     } catch (err) {
       setError(prev => ({ ...prev, cart: err.message }));

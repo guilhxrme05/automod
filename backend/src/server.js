@@ -490,6 +490,30 @@ app.post('/api/pedidos', autenticarToken, async (req, res) => {
     });
   }
 });
+// ROTA NOVA: TODOS OS PEDIDOS DO USUÁRIO (HISTÓRICO COMPLETO)
+app.get('/api/pedidos/meus-todos', autenticarToken, async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT 
+        p.id,
+        p.valor,
+        p.criado_em,
+        p.status,
+        p.slot_expedicao,
+        c.nome AS carro_nome
+      FROM pedidos p
+      JOIN carros c ON p.carro_id = c.id
+      WHERE p.user_id = $1 AND p.status != 'No carrinho'
+      ORDER BY p.criado_em DESC
+    `, [req.usuario.id]);
+
+    res.json(rows);
+  } catch (err) {
+    console.error('ERRO AO BUSCAR HISTÓRICO:', err);
+    res.status(500).json({ erro: 'Erro ao carregar histórico' });
+  }
+});
+
 // === INICIALIZAÇÃO ===
 app.listen(PORTA, () => {
     console.log(`API rodando na porta ${PORTA}`);
