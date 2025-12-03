@@ -476,7 +476,7 @@ app.post('/api/pedidos', autenticarToken, async (req, res) => {
           tracao || null,
           material_interno || null,
           iluminacao || null
-        ]
+        ])
       );
 
     res.status(201).json({
