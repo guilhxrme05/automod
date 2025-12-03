@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './Personalizacao.css';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Estrutura de opções com as 'key' corrigidas para corresponderem ao banco de dados
@@ -15,15 +16,12 @@ const customizationOptions = [
   {
     title: 'Exterior',
     options: [
-      // <<< CORREÇÃO AQUI >>>
       { name: 'Cor Externa', type: 'color', key: 'cor_externa', items: [
         { value: '#ffffff' }, { value: '#000000' }, 
         { value: '#ff0000' }, { value: '#0000ff' }, 
         { value: '#f8ff32' }, { value: '#008000' }
       ]},
-      // <<< CORREÇÃO AQUI >>>
       { name: 'Acabamento', type: 'select', key: 'acabamento', values: ['Metálico', 'Fosco', 'Perolado', 'Sólido'] },
-      // <<< CORREÇÃO AQUI >>>
       { name: 'Material Exterior', type: 'select', key: 'material_externo', values: ['Aço comum', 'Aço premium', 'Fibra de Carbono', 'Titânio'] },
       { name: 'Aerofólio', type: 'select', key: 'aerofolio', values: ['Sem', 'Lip Type', 'Ducktail Type', 'Gt Wing Type', 'Swan Neck Type', 'Retrátil'] },
     ]
@@ -38,7 +36,6 @@ const customizationOptions = [
   {
     title: 'Interior e Iluminação',
     options: [
-      // <<< CORREÇÃO AQUI >>>
       { name: 'Material dos Bancos', type: 'select', key: 'material_interno', values: ['Couro', 'Couro sintético', 'Tecido', 'Alcântara'] },
       { name: 'Tecnologia dos Faróis', type: 'select', key: 'iluminacao', values: ['LED', 'OLED', 'Neon', 'Xenon', 'Laser'] },
     ]
@@ -46,7 +43,6 @@ const customizationOptions = [
 ];
 
 const blockConfig = {
-  // <<< CORREÇÃO AQUI >>>
   1: ['combustivel', 'cambio', 'cor_externa', 'roda'],
   2: ['combustivel', 'cambio', 'cor_externa', 'roda', 'acabamento', 'tracao', 'aerofolio'],
 };
@@ -111,8 +107,17 @@ const Personalizacao = () => {
     setSelections(prev => ({ ...prev, [key]: value }));
   };
 
-  // FUNÇÃO ATUALIZADA PARA O CARRINHO
+  // --- FUNÇÃO ATUALIZADA PARA O CARRINHO ---
   const handleAddToCart = async () => {
+    // 1. Verifica se o usuário está logado
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        alert("Você precisa estar logado para adicionar itens ao carrinho!");
+        navigate('/login'); // Redireciona para login
+        return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     const pedidoData = {
@@ -120,16 +125,28 @@ const Personalizacao = () => {
       personalizacoes: selections,
       valor: 250000.00 
     };
+
     try {
-      const response = await fetch('https://api-node-automod.onrender.com/api/pedidos', {
+      // 2. Usa a API_URL configurada no topo
+      const response = await fetch(`${API_URL}/api/pedidos`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // 3. Envia o token no cabeçalho
+        },
         body: JSON.stringify(pedidoData),
       });
-      if (!response.ok) throw new Error('Falha ao adicionar o item ao carrinho.');
+
+      if (!response.ok) {
+          // Tenta ler o erro do backend se houver
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.erro || 'Falha ao adicionar o item ao carrinho.');
+      }
+      
+      alert('Carro adicionado com sucesso!');
       navigate('/perfil');
     } catch (err) {
-      setError("Não foi possível adicionar o item ao carrinho. Tente novamente.");
+      setError(err.message || "Não foi possível adicionar o item ao carrinho. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -212,4 +229,3 @@ const Personalizacao = () => {
 };
 
 export default Personalizacao;
-
