@@ -104,20 +104,18 @@ app.get('/api/pedidos/historico', async (req, res) => {
 
 // === CARRINHO (Agora protegido e filtrado por usuário) ===
 app.get('/api/pedidos/carrinho', autenticarToken, async (req, res) => {
-    try {
-        const query = `
-            SELECT p.*, c.nome AS carro_nome 
-            FROM pedidos p 
-            JOIN carros c ON p.carro_id = c.id 
-            WHERE p.status = 'No carrinho' AND p.usuario_id = $1
-            ORDER BY p.criado_em ASC;
-        `;
-        // Usa o ID do usuário que veio do token
-        const resultado = await db.query(query, [req.usuario.id]);
-        res.json(resultado.rows);
-    } catch (err) {
-        res.status(500).json({ erro: 'Não foi possível buscar os itens do carrinho.' });
-    }
+  try {
+    const { rows } = await db.query(
+      `SELECT p.*, c.nome AS carro_nome 
+       FROM pedidos p 
+       JOIN carros c ON p.carro_id = c.id 
+       WHERE p.status = 'No carrinho' AND p.user_id = $1`,
+      [req.usuario.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao carregar carrinho' });
+  }
 });
 
 // --- ROTA DA IA (SPRINT 3) ---
@@ -429,43 +427,72 @@ app.get('/api/pedidos/meus-pedidos', autenticarToken, async (req, res) => {
 });
 
 // === ADICIONAR ITEM AO CARRINHO ===
+// === ADICIONAR AO CARRINHO - VERSÃO COMPATÍVEL COM O NOVO BANCO ===
 app.post('/api/pedidos', autenticarToken, async (req, res) => {
-  const { carroId, personalizacoes, valor } = req.body;
-  const usuarioId = req.usuario.id; // vem do token
+  const { carroId, personalizacoes, valor = 250000.00 } = req.body;
+  const userId = req.usuario.id;
 
   try {
-    // Validações básicas
     if (!carroId || !personalizacoes) {
       return res.status(400).json({ erro: 'Dados incompletos' });
     }
 
-    // Verifica se o carro existe
-    const carroExiste = await db.query('SELECT id FROM carros WHERE id = $1', [carroId]);
-    if (carroExiste.rows.length === 0) {
-      return res.status(404).json({ erro: 'Carro não encontrado' });
-    }
+    // Desestrutura as personalizações e preenche com null se não vier
+    const {
+      combustivel,
+      cambio,
+      cor_externa,
+      acabamento,
+      material_externo,
+      aerofolio,
+      roda,
+      tracao,
+      material_interno,
+      iluminacao
+    } = personalizacoes;
 
-    // Insere o pedido como "No carrinho"
-    const resultado = await db.query(
-      `INSERT INTO pedidos 
-       (usuario_id, carro_id, personalizacoes, valor,valor, status) 
-       VALUES ($1, $2, $3, $4, 'No carrinho') 
-       RETURNING id, criado_em`,
-      [usuarioId, carroId, JSON.stringify(personalizacoes), valor || 250000.00]
-    );
+    const result = await db.query(
+      .query(
+        `INSERT INTO pedidos (
+          user_id, carro_id, valor, status,
+          combustivel, cambio, cor_externa, acabamento,
+          material_externo, aerofolio, roda, tracao,
+          material_interno, iluminacao
+        ) VALUES (
+          $1, $2, $3, 'No carrinho',
+          $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+        ) RETURNING id, carro_id, criado_em`,
+        [
+          userId,
+          carroId,
+          valor,
+          combustivel || null,
+          cambio || null,
+          cor_externa || null,
+          acabamento || null,
+          material_externo || null,
+          aerofolio || null,
+          roda || null,
+          tracao || null,
+          material_interno || null,
+          iluminacao || null
+        ]
+      );
 
     res.status(201).json({
-      mensagem: 'Carro adicionado ao carrinho!',
-      pedido: resultado.rows[0]
+      sucesso: true,
+      mensagem: 'Carro adicionado ao carrinho com sucesso!',
+      pedido: result.rows[0]
     });
 
   } catch (err) {
-    console.error('ERRO AO ADICIONAR NO CARRINHO:', err);
-    res.status(500).json({ erro: 'Falha interna ao adicionar ao carrinho' });
+      console.error('ERRO 500 - ADICIONAR CARRINHO:', err);
+      res.status(500).json({
+        erro: 'Erro ao salvar no banco',
+        detalhes: err.message
+      });
   }
 });
-
-
 // === INICIALIZAÇÃO ===
 app.listen(PORTA, () => {
     console.log(`API rodando na porta ${PORTA}`);
