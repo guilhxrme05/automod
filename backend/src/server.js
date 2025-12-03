@@ -161,22 +161,7 @@ app.post('/api/ia/recomendacao', async (req, res) => {
 
 // === CRIAR PEDIDO ===
 // === CARRINHO (Agora protegido e filtrado por usuário) ===
-app.get('/api/pedidos/carrinho', autenticarToken, async (req, res) => {
-    try {
-        const query = `
-            SELECT p.*, c.nome AS carro_nome 
-            FROM pedidos p 
-            JOIN carros c ON p.carro_id = c.id 
-            WHERE p.status = 'No carrinho' AND p.usuario_id = $1
-            ORDER BY p.criado_em ASC;
-        `;
-        // Usa o ID do usuário que veio do token
-        const resultado = await db.query(query, [req.usuario.id]);
-        res.json(resultado.rows);
-    } catch (err) {
-        res.status(500).json({ erro: 'Não foi possível buscar os itens do carrinho.' });
-    }
-});
+
 // === ENVIAR PARA PRODUÇÃO ===
 app.post('/api/pedidos/:id/produzir', async (req, res) => {
     const { id } = req.params;
