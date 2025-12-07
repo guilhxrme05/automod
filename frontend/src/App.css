@@ -2,6 +2,27 @@
   Este ficheiro aplica estilos globais a toda a aplicação.
   A regra principal aqui resolve o problema da sobreposição da Navbar.
 */
+/* ====== SCROLL SÓ NA HOME ====== */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;           /* mata scroll em TODAS as páginas por padrão */
+}
+
+/* Libera scroll SÓ na Home */
+.page-content {
+  overflow: hidden;           /* padrão: sem scroll */
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+/* Quando estiver na rota /home → libera scroll */
+.page-content.home-scroll {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+}
 
 .page-content {
   /*

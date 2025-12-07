@@ -41,7 +41,6 @@ const Login = () => {
   return (
     <div className="auth-container">
       <div className="auth-image-panel">
-        <span className="auth-logo">AUTOMOD</span>
       </div>
       <div className="auth-form-panel">
         <form className="auth-form" onSubmit={handleSubmit}>

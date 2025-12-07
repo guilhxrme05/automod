@@ -28,12 +28,11 @@ const AICustomizationQuiz = () => {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
         } else {
             setQuizComplete(true);
-            // Envia as respostas finais para o nosso backend
             getAIRecommendations(newAnswers);
         }
     };
 
-    // --- AQUI FAZEMOS A CHAMADA PARA O NOSSO BACKEND ---
+    // CHAMADA ATUALIZADA PARA O BACKEND (agora espera JSON)
     const getAIRecommendations = async (finalAnswers) => {
         setLoading(true);
         setError(null);
@@ -47,17 +46,32 @@ const AICustomizationQuiz = () => {
             });
 
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.erro || "Falha ao buscar recomendação.");
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.erro || "Erro na comunicação com a IA");
             }
 
             const data = await response.json();
-            const cleanedText = data.recomendacao.replace(/```markdown\n?|\n?```/g, '').trim();
-            setRecomendacao(cleanedText);
+            let resultado;
+
+            // Extrai JSON com segurança (à prova de falhas do Gemini)
+            try {
+                resultado = JSON.parse(data.recomendacao);
+            } catch {
+                const jsonMatch = data.recomendacao.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("Resposta da IA não está em JSON");
+                resultado = JSON.parse(jsonMatch[0]);
+            }
+
+            // Validação final
+            if (!resultado.carro_id || !resultado.carro_recomendado) {
+                throw new Error("Recomendação incompleta");
+            }
+
+            setRecomendacao(resultado);
 
         } catch (err) {
-            console.error("Erro ao chamar nossa API:", err);
-            setError(`Não foi possível obter recomendações: ${err.message}`);
+            console.error("Erro na recomendação:", err);
+            setError("Não foi possível gerar a recomendação. Tente novamente.");
         } finally {
             setLoading(false);
         }
@@ -71,42 +85,82 @@ const AICustomizationQuiz = () => {
         setError(null);
     };
 
-    // --- Ecrã de Resultados ---
+    // TELA DE RESULTADO (com botão direto pra personalização)
     if (quizComplete) {
         return (
             <div className="ai-quiz-container ai-results">
-                <h2>Recomendações Personalizadas para Si:</h2>
-                {loading && <div className="ai-loading"><div className="spinner"></div><p>A gerar as suas recomendações...</p></div>}
-                {error && <p className="ai-error">{error}</p>}
-                {recomendacao && (
-                    <div className="ai-recomendacao">
-                       {recomendacao.split('\n').map((line, index) => {
-                           if (line.startsWith('* ') || line.startsWith('- ')) {
-                               return <p key={index} className="ai-bullet">{line.substring(2)}</p>;
-                           }
-                           return <p key={index}>{line}</p>;
-                       })}
+                <h2>Sua Recomendação Perfeita Está Pronta!</h2>
+
+                {loading && (
+                    <div className="ai-loading">
+                        <div className="spinner"></div>
+                        <p>A IA está escolhendo o carro ideal para você...</p>
                     </div>
                 )}
-                 <button onClick={resetQuiz} className="ai-button">Refazer Quiz</button>
+
+                {error && <p className="ai-error">{error}</p>}
+
+                {recomendacao && (
+                    <div className="ai-recomendacao-final">
+                        <div className="categoria-badge">
+                            {recomendacao.categoria}
+                        </div>
+
+                        <h3 className="carro-titulo">{recomendacao.carro_recomendado}</h3>
+
+                        <p className="motivo">
+                            <strong>Por que escolhemos este carro:</strong><br />
+                            {recomendacao.motivo}
+                        </p>
+
+                        <a
+                            href={`/personalizacao/${recomendacao.carro_id}`}
+                            className="ai-button primary big"
+                        >
+                            Personalizar Este Carro Agora
+                        </a>
+
+                        <details className="detalhes-personalizacao">
+                            <summary>Ver personalização sugerida</summary>
+                            <ul>
+                                {Object.entries(recomendacao.personalizacoes || {}).map(([chave, valor]) => (
+                                    <li key={chave}>
+                                        <strong>{chave.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {valor}
+                                    </li>
+                                ))}
+                            </ul>
+                        </details>
+                    </div>
+                )}
+
+                <button onClick={resetQuiz} className="ai-button secondary" style={{ marginTop: '20px' }}>
+                    Refazer o Quiz
+                </button>
             </div>
         );
     }
 
-    // --- Ecrã de Perguntas ---
+    // TELA DAS PERGUNTAS
     const currentQuestion = quizQuestions[currentQuestionIndex];
+
     return (
         <div className="ai-quiz-container">
-            <h2>Descubra a Sua Personalização Ideal!</h2>
-            <p>Responda a algumas perguntas e deixe a nossa IA sugerir o estilo perfeito para si.</p>
+            <h2>Descubra o Seu Carro dos Sonhos!</h2>
+            <p>Responda 4 perguntas rápidas e nossa IA vai montar o carro perfeito pra você.</p>
+
             <div className="ai-quiz-progress">
                 Pergunta {currentQuestionIndex + 1} de {quizQuestions.length}
             </div>
+
             <div className="ai-quiz-question">
                 <h3>{currentQuestion.question}</h3>
                 <div className="ai-quiz-options">
                     {currentQuestion.options.map((option, index) => (
-                        <button key={index} onClick={() => handleAnswerSelect(option)} className="ai-option-button">
+                        <button
+                            key={index}
+                            onClick={() => handleAnswerSelect(option)}
+                            className="ai-option-button"
+                        >
                             {option}
                         </button>
                     ))}

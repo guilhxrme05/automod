@@ -118,47 +118,103 @@ app.get('/api/pedidos/carrinho', autenticarToken, async (req, res) => {
   }
 });
 
-// --- ROTA DA IA (SPRINT 3) ---
 app.post('/api/ia/recomendacao', async (req, res) => {
     try {
-        // Recebe as respostas do quiz que o frontend enviou
-        const { respostas } = req.body; 
+        const { respostas } = req.body;
 
-        if (!respostas) {
-            return res.status(400).json({ erro: "Nenhuma resposta fornecida." });
+        if (!respostas || Object.keys(respostas).length === 0) {
+            return res.status(400).json({ erro: "Respostas não fornecidas." });
         }
 
-        // 1. Monta o Prompt para o Gemini
-        // (Este prompt é baseado no AICustomizationQuiz.jsx que te mandei)
-        let prompt = "Aja como um especialista em personalização de carros de luxo e esportivos da marca Automod.\n";
-        prompt += "Com base nas seguintes preferências de um cliente que respondeu a um quiz:\n";
-        if (respostas.estilo) prompt += `- Estilo preferido: ${respostas.estilo}\n`;
-        if (respostas.performance) prompt += `- Performance buscada: ${respostas.performance}\n`;
-        if (respostas.cores) prompt += `- Paleta de cores: ${respostas.cores}\n`;
-        if (respostas.interior) prompt += `- Detalhe interior: ${respostas.interior}\n`;
-        
-        prompt += "\nRecomende um *tipo* de carro do nosso catálogo (Popular, Esportivo ou Luxo) e sugira 3 a 5 personalizações específicas (ex: Cor Externa, Tipo de Roda, Acabamento, Material Interno) que se alinhem perfeitamente com este perfil.\n";
-        prompt += "Justifique brevemente cada sugestão.\n";
-        prompt += "Responda em português do Brasil, de forma entusiasta e premium, usando uma lista com marcadores (bullets).";
+        const prompt = `
+Você é o consultor premium da Automod. SÓ recomende carros e opções que existem de verdade no nosso catálogo.
+
+=== CARROS REAIS COM CATEGORIA E ID ===
+POPULAR (poucas opções - use para economia, dia a dia, urbano):
+→ 14 - Chevrolet Onix
+→ 15 - Volkswagen Polo  
+→ 16 - Hyundai HB20
+
+ESPORTIVO (média/alta personalização - use para performance, visual agressivo):
+→ 8  - BMW M4
+→ 9  - Audi R8
+→ 10 - Porsche 911
+
+LUXO (todas as opções liberadas - use para exclusividade, tecnologia máxima):
+→ 11 - Lamborghini Urus
+→ 12 - Bentley Bentayga
+→ 13 - Rolls-Royce Cullinan
+
+=== REGRAS DE PERSONALIZAÇÃO POR CATEGORIA ===
+
+POPULAR (Onix, Polo, HB20):
+→ Permitido: combustivel, cambio, cor_externa, roda
+→ NÃO tem: acabamento, aerofolio, tracao 4x4, material_interno premium, iluminacao avançada
+
+ESPORTIVO (M4, R8, 911):
+→ Tudo do Popular +
+→ acabamento: Metálico, Fosco, Perolado, Sólido
+→ aerofolio: Sem, Lip Type, Ducktail Type, Gt Wing Type, Swan Neck Type, Retrátil
+→ tracao: Dianteira, Traseira, 4x4
+
+LUXO (Urus, Bentayga, Cullinan):
+→ Tudo do Esportivo +
+→ material_interno: Couro, Couro sintético, Tecido, Alcântara
+→ iluminacao: LED, OLED, Neon, Xenon, Laser
+
+Opções válidas em todas as categorias:
+• combustivel: Gasolina, Elétrico, Híbrido
+• cambio: Manual, Automático, CVT, Borboleta
+• cor_externa: #ffffff(Branco), #000000(Preto), #ff0000(Vermelho), #0000ff(Azul), #f8ff32(Amarelo), #008000(Verde)
+• roda: Asfalto comum, Asfalto premium, Drift, Rally, Off-road
+
+=== RESPOSTAS DO CLIENTE ===
+${Object.entries(respostas)
+  .map(([chave, valor]) => `• ${chave}: ${valor}`)
+  .join('\n')}
+
+=== TAREFAS ===
+1. Escolha a categoria mais adequada (Popular / Esportivo / Luxo)
+2. Escolha EXATAMENTE 1 carro real da categoria (use o nome completo)
+3. Monte a personalização usando SOMENTE as opções permitidas naquela categoria
+4. Responda APENAS com JSON válido, exatamente neste formato:
+
+{
+  "categoria": "Popular" | "Esportivo" | "Luxo",
+  "carro_recomendado": "nome completo do carro",
+  "carro_id": ID_NUMÉRICO,
+  "motivo": "máximo 2 frases curtas justificando",
+  "personalizacoes": {
+    // inclua apenas as chaves permitidas na categoria!
+    "combustivel": "...",
+    "cambio": "...",
+    "cor_externa": "#ffffff",
+    "roda": "...",
+    "acabamento": "...",
+    "aerofolio": "...",
+    "tracao": "...",
+    "material_interno": "...",
+    "iluminacao": "..."
+  }
+}
+
+Responda SOMENTE o JSON. Sem \`\`\`json, sem texto extra, sem explicações.`.trim();
 
         console.log("Enviando prompt para o Gemini...");
 
-        // 2. Chama a API do Gemini
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const textoRecomendacao = response.text();
+        const texto = response.text().trim();
 
-        console.log("Resposta do Gemini recebida.");
+        console.log("Resposta do Gemini:", texto);
 
-        // 3. Envia a resposta de volta para o frontend
-        res.json({ recomendacao: textoRecomendacao });
+        res.json({ recomendacao: texto });
 
     } catch (err) {
-        console.error('🛑 ERRO NA API GEMINI:', err);
-        res.status(500).json({ erro: 'Não foi possível contactar a IA. Tente novamente.' });
+        console.error('Erro Gemini:', err);
+        res.status(500).json({ erro: 'Erro na IA. Tente novamente.' });
     }
 });
-
 // === CRIAR PEDIDO ===
 // === CARRINHO (Agora protegido e filtrado por usuário) ===
 

@@ -1,8 +1,16 @@
 /* src/components/Landing.css */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap');
 
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;
+}
+
 .landing-hero {
-  height: 100vh;
+  height: 100dvh;           /* <-- ESSA É A LINHA QUE MATA O SCROLL NO CELULAR */
+  min-height: 100dvh;
   width: 100%;
   overflow: hidden;
   position: relative;
@@ -11,13 +19,13 @@
   justify-content: center;
   align-items: flex-start;
   padding: 0 7%;
-  color: #ffffff;
-  font-family: 'Montserrat', sans-serif;
+  margin: 0;                /* <-- adiciona isso */
+  box-sizing: border-box;
   
-  /* Fundo estático, sem a animação */
   background-image: url('/images/landing.jpg');
   background-size: cover;
   background-position: center;
+  background-attachment: fixed;
 }
 
 .hero-overlay {

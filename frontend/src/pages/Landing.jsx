@@ -7,7 +7,7 @@ const Landing = () => {
       <div className="hero-overlay"></div>
 
       <header className="landing-header">
-        <span className="logo">AUTOMOD</span>
+     
     
        
         
