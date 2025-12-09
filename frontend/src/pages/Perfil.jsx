@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext'; // Importe o contexto
 import './Perfil.css';
 
-// --- ÍCONES (Mantidos iguais) ---
+// --- ÍCONES ---
 const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
 const BoxIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2-0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline></svg>;
 const CartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>;
@@ -86,14 +86,15 @@ const DetalhesModal = ({ item, onClose }) => {
 };
 
 const Perfil = () => {
-  const { user, logout, API_URL } = useContext(AuthContext); // Hooks do Contexto
+  // AQUI FOI A MUDANÇA IMPORTANTE: Adicionamos 'loading'
+  const { user, logout, API_URL, loading } = useContext(AuthContext); 
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('carrinho');
   const [isEditing, setIsEditing] = useState(false);
   const [orders, setOrders] = useState([]);
   const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState({ orders: false, cart: false, produce: null, entregar: null });
+  const [loadingData, setLoadingData] = useState({ orders: false, cart: false, produce: null, entregar: null });
   const [error, setError] = useState({ orders: null, cart: null, produce: null, entregar: null });
   const [detailsModalItem, setDetailsModalItem] = useState(null);
 
@@ -107,11 +108,14 @@ const Perfil = () => {
 
   // 1. Proteção de Rota + Carga de Dados do Usuário
   useEffect(() => {
-    if (!user) {
-      // Se não tiver usuário logado, manda pro login
+    // SÓ redireciona se terminou de carregar (loading == false) e não tem usuário
+    if (!loading && !user) {
       navigate('/login');
-    } else {
-      // Se tiver, preenche o formulário
+      return;
+    } 
+    
+    // Se tiver usuário, preenche o formulário
+    if (user) {
       setFormData({
         name: user.nome || '',
         email: user.email || '',
@@ -119,7 +123,7 @@ const Perfil = () => {
         address: user.endereco || ''
       });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]); // Adicionado loading nas dependências
 
   // 2. Carga de Pedidos e Carrinho (Só se estiver logado)
   useEffect(() => {
@@ -138,34 +142,31 @@ const Perfil = () => {
   };
 
   const fetchOrders = async () => {
-  setLoading(prev => ({ ...prev, orders: true }));
-  setError(prev => ({ ...prev, orders: null }));
-  try {
-    const res = await fetch(`${API_URL}/api/pedidos/meus-todos`, {
-      headers: { 
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!res.ok) throw new Error('Falha ao buscar histórico');
-    const data = await res.json();
-    setOrders(data);
+    setLoadingData(prev => ({ ...prev, orders: true }));
+    setError(prev => ({ ...prev, orders: null }));
+    try {
+      const res = await fetch(`${API_URL}/api/pedidos/meus-todos`, {
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!res.ok) throw new Error('Falha ao buscar histórico');
+      const data = await res.json();
+      setOrders(data);
 
-  } catch (err) {
-    setError(prev => ({ ...prev, orders: err.message }));
-  } finally {
-    setLoading(prev => ({ ...prev, orders: false }));
-  }
-};
+    } catch (err) {
+      setError(prev => ({ ...prev, orders: err.message }));
+    } finally {
+      setLoadingData(prev => ({ ...prev, orders: false }));
+    }
+  };
 
   const fetchCartItems = async () => {
-    setLoading(prev => ({ ...prev, cart: true }));
+    setLoadingData(prev => ({ ...prev, cart: true }));
     setError(prev => ({ ...prev, cart: null }));
     try {
-      // Trazendo itens do carrinho (O Backend precisa filtrar por usuário também, idealmente)
-      // Por enquanto, vamos assumir que o backend já trata ou filtrar no front (não ideal)
-      // *Nota: Para produção, atualize o backend GET /carrinho para usar o token*
       const res = await fetch(`${API_URL}/api/pedidos/carrinho`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -173,15 +174,12 @@ const Perfil = () => {
       if (!res.ok) throw new Error('Falha ao buscar carrinho');
       const data = await res.json();
       
-      // Filtrando no front temporariamente para garantir que só vê os meus
-      // (O ideal é o backend fazer isso com WHERE usuario_id = $1)
-setCartItems(data);
-
+      setCartItems(data);
 
     } catch (err) {
       setError(prev => ({ ...prev, cart: err.message }));
     } finally {
-      setLoading(prev => ({ ...prev, cart: false }));
+      setLoadingData(prev => ({ ...prev, cart: false }));
     }
   };
 
@@ -207,7 +205,7 @@ setCartItems(data);
   };
 
   const handleProduzir = async (id) => {
-    setLoading(prev => ({ ...prev, produce: id }));
+    setLoadingData(prev => ({ ...prev, produce: id }));
     setError(prev => ({ ...prev, produce: null }));
     try {
       const res = await fetch(`${API_URL}/api/pedidos/${id}/produzir`, { method: 'POST' });
@@ -220,12 +218,12 @@ setCartItems(data);
       setError(prev => ({ ...prev, produce: err.message }));
       return false;
     } finally {
-      setLoading(prev => ({ ...prev, produce: null }));
+      setLoadingData(prev => ({ ...prev, produce: null }));
     }
   };
 
   const handleFinalizarCompra = async () => {
-    setLoading(prev => ({ ...prev, produce: 'all' }));
+    setLoadingData(prev => ({ ...prev, produce: 'all' }));
     let ok = true;
     for (const item of cartItems) {
       if (!(await handleProduzir(item.id))) {
@@ -233,7 +231,7 @@ setCartItems(data);
         break;
       }
     }
-    setLoading(prev => ({ ...prev, produce: null }));
+    setLoadingData(prev => ({ ...prev, produce: null }));
     if (ok) {
       alert('Todos os pedidos enviados para produção!');
       setCartItems([]);
@@ -244,7 +242,7 @@ setCartItems(data);
 
   const confirmarEntrega = async (pedidoId) => {
     if (!window.confirm('Confirmar que recebeu o carro? Isso libera o slot.')) return;
-    setLoading(prev => ({ ...prev, entregar: pedidoId }));
+    setLoadingData(prev => ({ ...prev, entregar: pedidoId }));
     setError(prev => ({ ...prev, entregar: null }));
     try {
       const response = await fetch(`${API_URL}/api/pedidos/${pedidoId}/entregar`, {
@@ -262,7 +260,7 @@ setCartItems(data);
       setError(prev => ({ ...prev, entregar: err.message }));
       alert('Erro: ' + err.message);
     } finally {
-      setLoading(prev => ({ ...prev, entregar: null }));
+      setLoadingData(prev => ({ ...prev, entregar: null }));
     }
   };
 
@@ -276,8 +274,25 @@ setCartItems(data);
     alert("Função de atualizar perfil será implementada em breve no backend!");
   };
 
-  // Se o user ainda não carregou, exibe loading ou nada
-  if (!user) return <div className="loading-screen">Carregando perfil...</div>;
+  // --- SEÇÃO DE LOADING DO CONTEXTO ---
+  // Se ainda está verificando o login (loading) mostra tela de espera
+  if (loading) {
+    return (
+      <div className="loading-screen" style={{
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        color: '#fff', 
+        fontSize: '1.5rem'
+      }}>
+        Verificando autenticação...
+      </div>
+    );
+  }
+
+  // Se terminou de carregar e não tem user, retorna null (o useEffect já vai ter redirecionado)
+  if (!user) return null;
 
   return (
     <>
@@ -288,7 +303,6 @@ setCartItems(data);
       <div className="profile-container">
         <aside className="profile-sidebar">
           <div className="user-info">
-            {/* Imagem Padrão ou Avatar Gerado com as Iniciais */}
             <div className="user-avatar-placeholder" style={{
                 width: '80px', height: '80px', borderRadius: '50%', 
                 backgroundColor: '#333', color: '#fff', display: 'flex', 
@@ -340,7 +354,7 @@ setCartItems(data);
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      disabled={true} // Email geralmente não se muda fácil
+                      disabled={true} 
                     />
                   </div>
                   <div className="form-group">
@@ -390,9 +404,9 @@ setCartItems(data);
                     <tr><th>ID</th><th>Carro</th><th>Data</th><th>Valor</th><th>Ações</th></tr>
                   </thead>
                   <tbody>
-                    {loading.cart && <tr><td colSpan="5">Carregando...</td></tr>}
+                    {loadingData.cart && <tr><td colSpan="5">Carregando...</td></tr>}
                     {error.cart && <tr><td colSpan="5" className="error-message">{error.cart}</td></tr>}
-                    {!loading.cart && cartItems.length === 0 && <tr><td colSpan="5">Carrinho vazio</td></tr>}
+                    {!loadingData.cart && cartItems.length === 0 && <tr><td colSpan="5">Carrinho vazio</td></tr>}
                     {cartItems.map(item => (
                       <tr key={item.id}>
                         <td>#{String(item.id).padStart(5, '0')}</td>
@@ -416,8 +430,8 @@ setCartItems(data);
               {cartItems.length > 0 && (
                 <div className="cart-summary">
                   <button className="button-secondary clear-cart-button" onClick={handleClearCart}>Limpar</button>
-                  <button className="button-primary checkout-button" onClick={handleFinalizarCompra} disabled={!!loading.produce}>
-                    {loading.produce ? 'Enviando...' : 'Finalizar Compra'}
+                  <button className="button-primary checkout-button" onClick={handleFinalizarCompra} disabled={!!loadingData.produce}>
+                    {loadingData.produce ? 'Enviando...' : 'Finalizar Compra'}
                   </button>
                 </div>
               )}
@@ -436,8 +450,8 @@ setCartItems(data);
                     </tr>
                   </thead>
                   <tbody>
-                    {loading.orders && <tr><td colSpan="7">Carregando...</td></tr>}
-                    {!loading.orders && orders.length === 0 && <tr><td colSpan="7">Nenhum pedido encontrado.</td></tr>}
+                    {loadingData.orders && <tr><td colSpan="7">Carregando...</td></tr>}
+                    {!loadingData.orders && orders.length === 0 && <tr><td colSpan="7">Nenhum pedido encontrado.</td></tr>}
                     {orders.map(order => (
                       <tr key={order.id}>
                         <td>#{String(order.id).padStart(5, '0')}</td>
@@ -451,9 +465,9 @@ setCartItems(data);
                             <button
                               className="btn-entregar"
                               onClick={() => confirmarEntrega(order.id)}
-                              disabled={loading.entregar === order.id}
+                              disabled={loadingData.entregar === order.id}
                             >
-                              {loading.entregar === order.id ? 'Liberando...' : <>Confirmar Entrega <CheckIcon /></>}
+                              {loadingData.entregar === order.id ? 'Liberando...' : <>Confirmar Entrega <CheckIcon /></>}
                             </button>
                           )}
                           {order.status === 'Entregue' && <span className="status-entregue">Entregue</span>}

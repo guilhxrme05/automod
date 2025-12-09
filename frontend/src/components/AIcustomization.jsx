@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // <--- IMPORT ESSENCIAL
 import './AICustomizationQuiz.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// Perguntas do Quiz
 const quizQuestions = [
     { id: 'estilo', question: "Qual é o seu estilo de carro preferido?", options: ["Desportivo Agressivo", "Luxuoso Elegante", "Urbano Moderno", "Aventureiro Off-road"] },
     { id: 'performance', question: "Que tipo de performance procura?", options: ["Aceleração máxima", "Conforto na estrada", "Economia de combustível", "Capacidade em terrenos difíceis"] },
@@ -12,6 +12,8 @@ const quizQuestions = [
 ];
 
 const AICustomizationQuiz = () => {
+    const navigate = useNavigate(); // <--- ESSA LINHA É A MÁGICA
+
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState({});
     const [quizComplete, setQuizComplete] = useState(false);
@@ -20,8 +22,8 @@ const AICustomizationQuiz = () => {
     const [recomendacao, setRecomendacao] = useState(null);
 
     const handleAnswerSelect = (option) => {
-        const currentQuestionId = quizQuestions[currentQuestionIndex].id;
-        const newAnswers = { ...answers, [currentQuestionId]: option };
+        const currentId = quizQuestions[currentQuestionIndex].id;
+        const newAnswers = { ...answers, [currentId]: option };
         setAnswers(newAnswers);
 
         if (currentQuestionIndex < quizQuestions.length - 1) {
@@ -32,7 +34,6 @@ const AICustomizationQuiz = () => {
         }
     };
 
-    // CHAMADA ATUALIZADA PARA O BACKEND (agora espera JSON)
     const getAIRecommendations = async (finalAnswers) => {
         setLoading(true);
         setError(null);
@@ -53,29 +54,40 @@ const AICustomizationQuiz = () => {
             const data = await response.json();
             let resultado;
 
-            // Extrai JSON com segurança (à prova de falhas do Gemini)
             try {
                 resultado = JSON.parse(data.recomendacao);
             } catch {
                 const jsonMatch = data.recomendacao.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) throw new Error("Resposta da IA não está em JSON");
+                if (!jsonMatch) throw new Error("Resposta da IA inválida");
                 resultado = JSON.parse(jsonMatch[0]);
             }
 
-            // Validação final
-            if (!resultado.carro_id || !resultado.carro_recomendado) {
+            if (!resultado.carro_id || !resultado.carro_recomendado || !resultado.personalizacoes) {
                 throw new Error("Recomendação incompleta");
             }
 
             setRecomendacao(resultado);
 
         } catch (err) {
-            console.error("Erro na recomendação:", err);
+            console.error("Erro na IA:", err);
             setError("Não foi possível gerar a recomendação. Tente novamente.");
         } finally {
             setLoading(false);
         }
     };
+
+    // FUNÇÃO CORRIGIDA: usa navigate() em vez de window.location
+// AICustomizationQuiz.js
+
+const irParaPersonalizacaoComIA = () => {
+    // Não precisa mais de localStorage aqui
+    navigate(`/personalizacao/${recomendacao.carro_id}`, { 
+        state: { 
+            iaData: recomendacao.personalizacoes,
+            fromIA: true 
+        } 
+    });
+};
 
     const resetQuiz = () => {
         setCurrentQuestionIndex(0);
@@ -85,7 +97,7 @@ const AICustomizationQuiz = () => {
         setError(null);
     };
 
-    // TELA DE RESULTADO (com botão direto pra personalização)
+    // TELA DE RESULTADO
     if (quizComplete) {
         return (
             <div className="ai-quiz-container ai-results">
@@ -94,7 +106,7 @@ const AICustomizationQuiz = () => {
                 {loading && (
                     <div className="ai-loading">
                         <div className="spinner"></div>
-                        <p>A IA está escolhendo o carro ideal para você...</p>
+                        <p>A IA está montando seu carro dos sonhos...</p>
                     </div>
                 )}
 
@@ -113,29 +125,33 @@ const AICustomizationQuiz = () => {
                             {recomendacao.motivo}
                         </p>
 
-                        <a
-                            href={`/personalizacao/${recomendacao.carro_id}`}
+                        {/* BOTÃO 100% FUNCIONAL */}
+                        <button
+                            onClick={irParaPersonalizacaoComIA}
                             className="ai-button primary big"
                         >
-                            Personalizar Este Carro Agora
-                        </a>
+                            Personalizar com Todas as Opções da IA
+                        </button>
 
                         <details className="detalhes-personalizacao">
-                            <summary>Ver personalização sugerida</summary>
+                            <summary>Ver configuração sugerida pela IA</summary>
                             <ul>
                                 {Object.entries(recomendacao.personalizacoes || {}).map(([chave, valor]) => (
                                     <li key={chave}>
-                                        <strong>{chave.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {valor}
+                                        <strong>
+                                            {chave.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
+                                        </strong>{' '}
+                                        {valor}
                                     </li>
                                 ))}
                             </ul>
                         </details>
+
+                        <button onClick={resetQuiz} className="ai-button secondary" style={{ marginTop: '20px' }}>
+                            Refazer o Quiz
+                        </button>
                     </div>
                 )}
-
-                <button onClick={resetQuiz} className="ai-button secondary" style={{ marginTop: '20px' }}>
-                    Refazer o Quiz
-                </button>
             </div>
         );
     }
@@ -145,8 +161,8 @@ const AICustomizationQuiz = () => {
 
     return (
         <div className="ai-quiz-container">
-            <h2>Descubra o Seu Carro dos Sonhos!</h2>
-            <p>Responda 4 perguntas rápidas e nossa IA vai montar o carro perfeito pra você.</p>
+            <h2>Monte Seu Carro dos Sonhos com Inteligência Artificial</h2>
+            <p>Responda 4 perguntas e deixe a IA criar o carro perfeito para você.</p>
 
             <div className="ai-quiz-progress">
                 Pergunta {currentQuestionIndex + 1} de {quizQuestions.length}

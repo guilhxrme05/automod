@@ -5,17 +5,26 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    // Ajuste a URL base conforme seu ambiente (prod ou dev)
+    // Adicionamos um estado para saber se ainda estamos verificando o localStorage
+    const [loading, setLoading] = useState(true); 
+
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     useEffect(() => {
         // Tenta recuperar o usuário se a página for recarregada
-        const token = localStorage.getItem('token');
-        const userData = localStorage.getItem('user');
-        if (token && userData) {
-            setUser(JSON.parse(userData));
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        }
+        const recoverUser = () => {
+            const token = localStorage.getItem('token');
+            const userData = localStorage.getItem('user');
+            
+            if (token && userData) {
+                setUser(JSON.parse(userData));
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            }
+            // IMPORTANTE: Avisa que terminou de carregar (tendo achado usuário ou não)
+            setLoading(false);
+        };
+
+        recoverUser();
     }, []);
 
     const login = async (email, senha) => {
@@ -41,7 +50,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, API_URL }}>
+        // Passamos o 'loading' aqui para quem precisar usar
+        <AuthContext.Provider value={{ user, loading, login, logout, API_URL }}>
             {children}
         </AuthContext.Provider>
     );

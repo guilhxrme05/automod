@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom'; // <--- Adicionado useLocation
 import './Personalizacao.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// Estrutura de opções com as 'key' corrigidas para corresponderem ao banco de dados
 const customizationOptions = [
   {
     title: 'Motor e Transmissão',
@@ -50,19 +49,21 @@ const blockConfig = {
 const Personalizacao = () => {
   const { carId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation(); // <--- Hook para acessar o state da navegação
 
   const [car, setCar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selections, setSelections] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [iaAplicada, setIaAplicada] = useState(false);
 
-  // Busca os dados do carro
+  // BUSCA O CARRO
   useEffect(() => {
     const fetchCarData = async () => {
       try {
         const response = await fetch(`${API_URL}/api/carros/${carId}`);
-        if (!response.ok) throw new Error('Não foi possível encontrar o carro solicitado.');
+        if (!response.ok) throw new Error('Carro não encontrado');
         const data = await response.json();
         setCar(data);
       } catch (err) {
@@ -74,156 +75,177 @@ const Personalizacao = () => {
     fetchCarData();
   }, [carId]);
 
-
-  const optionsParaExibir = React.useMemo(() => {
-    if (!car) return [];
-    if (car.num_blocos >= 3 || !blockConfig[car.num_blocos]) {
-      return customizationOptions;
-    }
-    const allowedKeys = blockConfig[car.num_blocos];
-    return customizationOptions.map(section => {
-      const filteredOptions = section.options.filter(option => allowedKeys.includes(option.key));
-      return filteredOptions.length > 0 ? { ...section, options: filteredOptions } : null;
-    }).filter(Boolean);
-  }, [car]);
-
-
+  // APLICA AS SUGESTÕES DA IA (Lógica Atualizada)
   useEffect(() => {
-    if (optionsParaExibir.length > 0) {
-      const initialSelections = {};
-      optionsParaExibir.forEach(section => {
-        section.options.forEach(option => {
-          if (!option.key) return;
-          if (option.type === 'select') initialSelections[option.key] = option.values[0];
-          else if (option.type === 'toggle') initialSelections[option.key] = false;
-          else if (option.type === 'color') initialSelections[option.key] = option.items[0].value;
-        });
-      });
-      setSelections(initialSelections);
+    if (!car || loading) return;
+
+    // 1. Tenta pegar do state da navegação (Método Principal da Opção 1)
+    const iaSugestoesState = location.state?.iaData;
+
+    // 2. Tenta pegar do localStorage (Fallback caso o usuário dê Refresh/F5)
+    const iaSugestoesStorage = localStorage.getItem('ia_personalizacoes_sugeridas');
+    const iaCarroId = localStorage.getItem('ia_carro_id');
+
+    let sugestoes = null;
+
+    if (iaSugestoesState) {
+        // Prioridade: Dados vindos via navigate
+        sugestoes = iaSugestoesState;
+    } else if (iaCarroId === carId && iaSugestoesStorage) {
+        // Fallback: Dados do localStorage (se o ID do carro bater)
+        try {
+            sugestoes = JSON.parse(iaSugestoesStorage);
+        } catch (e) {
+            console.error("Erro ao ler JSON do Storage", e);
+        }
     }
-  }, [optionsParaExibir]);
+
+    if (sugestoes) {
+      const aplicaveis = {};
+
+      Object.keys(sugestoes).forEach(key => {
+        const existe = customizationOptions.flatMap(s => s.options).some(o => o.key === key);
+        if (existe) {
+          aplicaveis[key] = sugestoes[key];
+        }
+      });
+
+      if (Object.keys(aplicaveis).length > 0) {
+        setSelections(aplicaveis);
+        setIaAplicada(true);
+      }
+      
+      // OBS: Removemos o localStorage.removeItem daqui para evitar o bug do StrictMode.
+      // A limpeza agora é feita no handleAddToCart.
+    }
+  }, [car, carId, loading, location.state]); 
+
+  // INICIALIZA VALORES DEFAULT APENAS SE NÃO VEIO DA IA
+  useEffect(() => {
+    if (!car || iaAplicada || Object.keys(selections).length > 0) return;
+
+    const allowedKeys = car.num_blocos >= 3 || !blockConfig[car.num_blocos]
+      ? customizationOptions.flatMap(s => s.options).map(o => o.key)
+      : blockConfig[car.num_blocos];
+
+    const initial = {};
+    customizationOptions.forEach(section => {
+      section.options.forEach(opt => {
+        if (allowedKeys.includes(opt.key)) {
+          initial[opt.key] = opt.type === 'select' ? opt.values[0] : opt.items[0].value;
+        }
+      });
+    });
+
+    setSelections(initial);
+  }, [car, iaAplicada]);
 
   const handleSelect = (key, value) => {
     setSelections(prev => ({ ...prev, [key]: value }));
   };
 
-  // --- FUNÇÃO ATUALIZADA PARA O CARRINHO ---
   const handleAddToCart = async () => {
-    // 1. Verifica se o usuário está logado
     const token = localStorage.getItem('token');
-    
     if (!token) {
-        alert("Você precisa estar logado para adicionar itens ao carrinho!");
-        navigate('/login'); // Redireciona para login
-        return;
+      alert("Você precisa estar logado!");
+      navigate('/login');
+      return;
     }
 
     setIsSubmitting(true);
-    setError(null);
-    const pedidoData = {
-      carroId: car.id,
-      personalizacoes: selections,
-      valor: 250000.00 
-    };
-
     try {
-      // 2. Usa a API_URL configurada no topo
-      const response = await fetch(`${API_URL}/api/pedidos`, {
+      const res = await fetch(`${API_URL}/api/pedidos`, {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // 3. Envia o token no cabeçalho
-        },
-        body: JSON.stringify(pedidoData),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ carroId: car.id, personalizacoes: selections, valor: 250000.00 })
       });
 
-      if (!response.ok) {
-          // Tenta ler o erro do backend se houver
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.erro || 'Falha ao adicionar o item ao carrinho.');
-      }
+      if (!res.ok) throw new Error("Erro ao adicionar");
       
-      alert('Carro adicionado com sucesso!');
+      // SUCESSO! Agora limpamos os dados da IA do localStorage para não interferir no futuro
+      localStorage.removeItem('ia_carro_id');
+      localStorage.removeItem('ia_personalizacoes_sugeridas');
+
+      alert("Carro adicionado com sucesso!");
       navigate('/perfil');
     } catch (err) {
-      setError(err.message || "Não foi possível adicionar o item ao carrinho. Tente novamente.");
+      setError("Erro ao adicionar ao carrinho");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) return <div className="status-page">A carregar o personalizador...</div>;
+  if (loading) return <div className="status-page">Carregando...</div>;
   if (error) return <div className="status-page error">{error}</div>;
-  if (!car) return <div className="status-page">Carro não encontrado.</div>;
+  if (!car) return <div className="status-page">Carro não encontrado</div>;
 
   return (
     <div className="personalizacao-container">
+
+
+
       <section className="car-showcase">
         <div className="car-info">
           <h1>{car.nome}</h1>
           <img src={car.image} alt={car.nome} className="car-image" />
-          {car.descricao && (
-            <p className="car-description">"{car.descricao}"</p>
-          )}
+          {car.descricao && <p className="car-description">"{car.descricao}"</p>}
         </div>
       </section>
 
       <aside className="options-panel">
         <div className="panel-header">
           <h2>Personalização</h2>
-          <button 
-            className="finish-button"
-            onClick={handleAddToCart}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'A adicionar...' : 'Adicionar ao Carrinho'}
+          <button className="finish-button" onClick={handleAddToCart} disabled={isSubmitting}>
+            {isSubmitting ? 'Adicionando...' : 'Adicionar ao Carrinho'}
           </button>
         </div>
 
         <div className="options-list">
-          {optionsParaExibir.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="option-section">
-              <h3>{section.title}</h3>
-              {section.options.map((option, optionIndex) => (
-                <div key={option.key || optionIndex} className="option-item">
-                  <h4>{option.name}</h4>
-                  {option.type === 'select' && (
-                    <div className="select-group">
-                      {option.values.map((value) => (
-                        <button 
-                          key={value}
-                          className={`select-button ${selections[option.key] === value ? 'active' : ''}`}
-                          onClick={() => handleSelect(option.key, value)}
-                        >{value}</button>
-                      ))}
-                    </div>
-                  )}
-                  {option.type === 'color' && (
-                    <div className="option-grid">
-                      {option.items.map((item) => (
-                        <div 
-                          key={item.value}
-                          className={`option-swatch color-swatch ${selections[option.key] === item.value ? 'selected' : ''}`}
-                          style={{ background: item.value }}
-                          onClick={() => handleSelect(option.key, item.value)}
-                        ></div>
-                      ))}
-                    </div>
-                  )}
-                  {option.type === 'toggle' && (
-                    <button 
-                      className={`toggle-button ${selections[option.key] ? 'active' : ''}`}
-                      onClick={() => handleSelect(option.key, !selections[option.key])}
-                    >
-                      {selections[option.key] ? 'Sim' : 'Não'}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
+          {customizationOptions.map((section, i) => {
+            const allowed = !car.num_blocos || car.num_blocos >= 3 || !blockConfig[car.num_blocos]
+              ? section.options
+              : section.options.filter(opt => blockConfig[car.num_blocos].includes(opt.key));
+
+            if (allowed.length === 0) return null;
+
+            return (
+              <div key={i} className="option-section">
+                <h3>{section.title}</h3>
+                {allowed.map(opt => (
+                  <div key={opt.key} className="option-item">
+                    <h4>{opt.name}</h4>
+                    {opt.type === 'select' && (
+                      <div className="select-group">
+                        {opt.values.map(v => (
+                          <button
+                            key={v}
+                            className={`select-button ${selections[opt.key] === v ? 'active' : ''}`}
+                            onClick={() => handleSelect(opt.key, v)}
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {opt.type === 'color' && (
+                      <div className="option-grid">
+                        {opt.items.map(item => (
+                          <div
+                            key={item.value}
+                            className={`option-swatch color-swatch ${selections[opt.key] === item.value ? 'selected' : ''}`}
+                            style={{ background: item.value }}
+                            onClick={() => handleSelect(opt.key, item.value)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
-      </aside> 
+      </aside>
     </div>
   );
 };

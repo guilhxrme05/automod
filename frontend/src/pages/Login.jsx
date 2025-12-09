@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './Login.css'; // Certifique-se que o CSS está importado
+import './Login.css'; 
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -9,14 +9,16 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  
+  // O hook navigate ainda existe, mas para o login vamos usar o window.location
+  const navigate = useNavigate(); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(''); // Limpa erros antigos
 
     try {
-      // O backend espera { email, senha } conforme seu código anterior
+      // O backend espera { email, senha }
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         senha: password
@@ -30,7 +32,12 @@ const Login = () => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
       console.log('Login realizado com sucesso!');
-      navigate('/perfil'); // Redireciona para a tela de perfil ou home
+
+      // --- CORREÇÃO APLICADA AQUI ---
+      // Usamos window.location.href em vez de navigate.
+      // Isso força a página a recarregar, garantindo que o sistema "perceba" 
+      // que o usuário está logado antes de entrar na tela de perfil.
+      window.location.href = '/perfil'; 
 
     } catch (err) {
       console.error(err);

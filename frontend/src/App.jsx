@@ -24,7 +24,7 @@ function MainContent() {
         <Route path="/" element={<Landing />} />          
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/personalizar/:carId" element={<Personalizacao />} />
+        <Route path="/personalizacao/:carId" element={<Personalizacao />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/contato" element={<Contato />} />
         <Route path="/perfil" element={<Perfil />} />
