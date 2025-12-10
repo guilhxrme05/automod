@@ -115,7 +115,7 @@ const Home = () => {
                 filteredCars.map((car) => (
                   <Link 
                     key={car.id} 
-                    to={`/personalizar/${car.id}`} 
+                    to={`/personalizacao/${car.id}`} 
                     state={{ carro: car }}
                     className="car-card-link"
                   >

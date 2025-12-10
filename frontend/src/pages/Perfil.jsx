@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext'; // Importe o contexto
+import { AuthContext } from '../context/AuthContext'; 
 import './Perfil.css';
 
 // --- ÍCONES ---
@@ -33,7 +33,7 @@ const NomesPersonalizacoes = {
   iluminacao: 'Tecnologia dos Faróis'
 };
 
-// Conversão de hex para nome (simplificada)
+// Conversão de hex para nome
 const corParaNome = (valor) => {
   if (!valor) return 'Padrão';
   const cores = {
@@ -86,12 +86,14 @@ const DetalhesModal = ({ item, onClose }) => {
 };
 
 const Perfil = () => {
-  // AQUI FOI A MUDANÇA IMPORTANTE: Adicionamos 'loading'
-  const { user, logout, API_URL, loading } = useContext(AuthContext); 
+  // ATENÇÃO: Adicione 'setUser' ao seu AuthContext para isso funcionar
+  const { user, logout, API_URL, loading, setUser } = useContext(AuthContext); 
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('carrinho');
   const [isEditing, setIsEditing] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false); // Novo estado de loading do form
+
   const [orders, setOrders] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [loadingData, setLoadingData] = useState({ orders: false, cart: false, produce: null, entregar: null });
@@ -108,7 +110,6 @@ const Perfil = () => {
 
   // 1. Proteção de Rota + Carga de Dados do Usuário
   useEffect(() => {
-    // SÓ redireciona se terminou de carregar (loading == false) e não tem usuário
     if (!loading && !user) {
       navigate('/login');
       return;
@@ -123,7 +124,7 @@ const Perfil = () => {
         address: user.endereco || ''
       });
     }
-  }, [user, loading, navigate]); // Adicionado loading nas dependências
+  }, [user, loading, navigate]);
 
   // 2. Carga de Pedidos e Carrinho (Só se estiver logado)
   useEffect(() => {
@@ -267,15 +268,65 @@ const Perfil = () => {
   const handleInputChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
-  const handleEditToggle = () => setIsEditing(prev => !prev);
-  const handleSaveChanges = (e) => {
+
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Se cancelou, volta os dados originais
+      setFormData({
+        name: user.nome || '',
+        email: user.email || '',
+        phone: user.telefone || '',
+        address: user.endereco || ''
+      });
+    }
+    setIsEditing(prev => !prev);
+  };
+
+  // --- NOVA FUNÇÃO DE SALVAR DADOS ---
+  const handleSaveChanges = async (e) => {
     e.preventDefault();
-    setIsEditing(false);
-    alert("Função de atualizar perfil será implementada em breve no backend!");
+    setIsSavingProfile(true);
+
+    try {
+      const payload = {
+        nome: formData.name,
+        telefone: formData.phone,
+        endereco: formData.address
+      };
+
+      const response = await fetch(`${API_URL}/api/usuarios`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.erro || 'Erro ao atualizar perfil');
+      }
+
+      const dadosAtualizados = await response.json();
+
+      // Atualiza o contexto (se a função setUser existir no Contexto)
+      if (setUser) {
+        // Mesclamos o user atual com os dados novos para garantir
+        setUser(prev => ({ ...prev, ...dadosAtualizados }));
+      }
+      
+      alert('Perfil atualizado com sucesso!');
+      setIsEditing(false);
+
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   // --- SEÇÃO DE LOADING DO CONTEXTO ---
-  // Se ainda está verificando o login (loading) mostra tela de espera
   if (loading) {
     return (
       <div className="loading-screen" style={{
@@ -291,7 +342,6 @@ const Perfil = () => {
     );
   }
 
-  // Se terminou de carregar e não tem user, retorna null (o useEffect já vai ter redirecionado)
   if (!user) return null;
 
   return (
@@ -311,6 +361,7 @@ const Perfil = () => {
             }}>
                 {user.nome ? user.nome.charAt(0).toUpperCase() : 'U'}
             </div>
+            {/* O nome atualiza aqui automaticamente agora */}
             <h2>{user.nome}</h2>
             <p>Membro da AutoMod</p>
           </div>
@@ -343,7 +394,8 @@ const Perfil = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
+                      disabled={!isEditing || isSavingProfile}
+                      required
                     />
                   </div>
                   <div className="form-group">
@@ -355,6 +407,7 @@ const Perfil = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       disabled={true} 
+                      title="O email não pode ser alterado."
                     />
                   </div>
                   <div className="form-group">
@@ -365,7 +418,7 @@ const Perfil = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
+                      disabled={!isEditing || isSavingProfile}
                     />
                   </div>
                   <div className="form-group">
@@ -376,15 +429,28 @@ const Perfil = () => {
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
+                      disabled={!isEditing || isSavingProfile}
                     />
                   </div>
                 </div>
                 <div className="form-actions">
                   {isEditing ? (
                     <>
-                      <button type="submit" className="button-primary">Salvar</button>
-                      <button type="button" className="button-secondary" onClick={handleEditToggle}>Cancelar</button>
+                      <button 
+                        type="submit" 
+                        className="button-primary"
+                        disabled={isSavingProfile}
+                      >
+                        {isSavingProfile ? 'Salvando...' : 'Salvar'}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="button-secondary" 
+                        onClick={handleEditToggle}
+                        disabled={isSavingProfile}
+                      >
+                        Cancelar
+                      </button>
                     </>
                   ) : (
                     <button type="button" className="button-primary" onClick={handleEditToggle}>Editar</button>
