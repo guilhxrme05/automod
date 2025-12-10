@@ -363,7 +363,9 @@ app.get('/queue/items', (req, res) => {
     const jobs = Object.values(jobQueue).map(j => ({
         id: j.id,
         status: j.status,
-        orderId: j.payload?.orderId || null,
+        // ADICIONE ESTA LINHA ABAIXO:
+        payload: j.payload, // <--- Isso vai mostrar a caixa completa no JSON!
+        
         slot: j.slot || null,
         concluido_em: j.concluidoEm || null
     }));
