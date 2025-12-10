@@ -449,35 +449,48 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// === ATUALIZAR PERFIL (Rota Nova) ===
+// === ATUALIZAR PERFIL (COM SENHA E NOVOS CAMPOS) ===
 app.put('/api/usuarios', autenticarToken, async (req, res) => {
-    // Pegamos o ID do token (seguro) e os dados do corpo da requisição
     const userId = req.usuario.id;
-    const { nome, telefone, endereco } = req.body;
+    const { nome, telefone, endereco, senha } = req.body;
 
     try {
-        // Validação simples
         if (!nome) {
             return res.status(400).json({ erro: 'O nome é obrigatório.' });
         }
 
-        // Atualiza no banco de dados e retorna os dados novos
-        // O RETURNING é importante para atualizar o frontend imediatamente
-        const query = `
-            UPDATE usuarios 
-            SET nome = $1, telefone = $2, endereco = $3 
-            WHERE id = $4 
-            RETURNING id, nome, email, telefone, endereco;
-        `;
+        let query;
+        let values;
+
+        // Se o usuário enviou uma senha nova, precisamos criptografar e atualizar tudo
+        if (senha && senha.trim() !== '') {
+            const salt = await bcrypt.genSalt(10);
+            const senhaHash = await bcrypt.hash(senha, salt);
+            
+            query = `
+                UPDATE usuarios 
+                SET nome = $1, telefone = $2, endereco = $3, senha_hash = $4
+                WHERE id = $5
+                RETURNING id, nome, email, telefone, endereco;
+            `;
+            values = [nome, telefone, endereco, senhaHash, userId];
+        } else {
+            // Se NÃO enviou senha, atualiza apenas os dados cadastrais
+            query = `
+                UPDATE usuarios 
+                SET nome = $1, telefone = $2, endereco = $3
+                WHERE id = $4
+                RETURNING id, nome, email, telefone, endereco;
+            `;
+            values = [nome, telefone, endereco, userId];
+        }
         
-        const values = [nome, telefone, endereco, userId];
         const result = await db.query(query, values);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ erro: 'Usuário não encontrado.' });
         }
 
-        // Retorna o objeto atualizado
         res.json(result.rows[0]);
 
     } catch (err) {

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext'; 
 import './Perfil.css';
 
-// --- ÍCONES ---
+// --- ÍCONES (Mantidos) ---
 const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
 const BoxIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2-0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline></svg>;
 const CartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>;
@@ -33,19 +33,12 @@ const NomesPersonalizacoes = {
   iluminacao: 'Tecnologia dos Faróis'
 };
 
-// Conversão de hex para nome
 const corParaNome = (valor) => {
   if (!valor) return 'Padrão';
   const cores = {
-    '#FFFFFF': 'Branco',
-    '#000000': 'Preto',
-    '#FF0000': 'Vermelho',
-    '#0000FF': 'Azul',
-    '#008000': 'Verde',
-    '#FFFF00': 'Amarelo',
-    '#808080': 'Cinza',
-    '#FFA500': 'Laranja',
-    '#800080': 'Roxo'
+    '#FFFFFF': 'Branco', '#000000': 'Preto', '#FF0000': 'Vermelho',
+    '#0000FF': 'Azul', '#008000': 'Verde', '#FFFF00': 'Amarelo',
+    '#808080': 'Cinza', '#FFA500': 'Laranja', '#800080': 'Roxo'
   };
   return cores[valor.toUpperCase()] || valor;
 };
@@ -70,15 +63,11 @@ const DetalhesModal = ({ item, onClose }) => {
             <div key={detalhe.nome} className="modal-detail-item">
               <span className="modal-detail-label">{detalhe.nome}:</span>
               <span className="modal-detail-value">
-                {detalhe.nome.toLowerCase().includes('cor')
-                  ? corParaNome(detalhe.valor)
-                  : detalhe.valor}
+                {detalhe.nome.toLowerCase().includes('cor') ? corParaNome(detalhe.valor) : detalhe.valor}
               </span>
             </div>
           ))}
-          {personalizacoes.length === 0 && (
-            <p className="no-details">Este carro não possui personalizações adicionais.</p>
-          )}
+          {personalizacoes.length === 0 && <p className="no-details">Este carro não possui personalizações adicionais.</p>}
         </div>
       </div>
     </div>
@@ -86,65 +75,58 @@ const DetalhesModal = ({ item, onClose }) => {
 };
 
 const Perfil = () => {
-  // ATENÇÃO: Adicione 'setUser' ao seu AuthContext para isso funcionar
   const { user, logout, API_URL, loading, setUser } = useContext(AuthContext); 
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('carrinho');
+  
+  // Controle de edição
   const [isEditing, setIsEditing] = useState(false);
-  const [isSavingProfile, setIsSavingProfile] = useState(false); // Novo estado de loading do form
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
+  // Dados do sistema
   const [orders, setOrders] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [loadingData, setLoadingData] = useState({ orders: false, cart: false, produce: null, entregar: null });
   const [error, setError] = useState({ orders: null, cart: null, produce: null, entregar: null });
   const [detailsModalItem, setDetailsModalItem] = useState(null);
 
-  // Inicializa o form com vazio, será preenchido pelo useEffect
+  // Form do perfil
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    password: '' // Novo campo para senha
   });
 
-  // 1. Proteção de Rota + Carga de Dados do Usuário
+  // Preencher dados ao carregar ou mudar usuário
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
-      return;
-    } 
-    
-    // Se tiver usuário, preenche o formulário
-    if (user) {
+    } else if (user) {
       setFormData({
         name: user.nome || '',
         email: user.email || '',
         phone: user.telefone || '',
-        address: user.endereco || ''
+        address: user.endereco || '',
+        password: '' // Senha sempre começa vazia por segurança
       });
     }
   }, [user, loading, navigate]);
 
-  // 2. Carga de Pedidos e Carrinho (Só se estiver logado)
+  // Carregar Pedidos/Carrinho
   useEffect(() => {
     if (!user) return;
-
-    if (activeTab === 'pedidos') {
-      fetchOrders();
-    } else if (activeTab === 'carrinho') {
-      fetchCartItems();
-    }
+    if (activeTab === 'pedidos') fetchOrders();
+    else if (activeTab === 'carrinho') fetchCartItems();
   }, [activeTab, user]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const handleLogout = () => { logout(); navigate('/login'); };
 
+  // --- FETCH FUNCTIONS ---
   const fetchOrders = async () => {
     setLoadingData(prev => ({ ...prev, orders: true }));
-    setError(prev => ({ ...prev, orders: null }));
     try {
       const res = await fetch(`${API_URL}/api/pedidos/meus-todos`, {
         headers: { 
@@ -152,47 +134,32 @@ const Perfil = () => {
           'Content-Type': 'application/json'
         }
       });
-      
       if (!res.ok) throw new Error('Falha ao buscar histórico');
-      const data = await res.json();
-      setOrders(data);
-
-    } catch (err) {
-      setError(prev => ({ ...prev, orders: err.message }));
-    } finally {
-      setLoadingData(prev => ({ ...prev, orders: false }));
-    }
+      setOrders(await res.json());
+    } catch (err) { setError(prev => ({ ...prev, orders: err.message })); }
+    finally { setLoadingData(prev => ({ ...prev, orders: false })); }
   };
 
   const fetchCartItems = async () => {
     setLoadingData(prev => ({ ...prev, cart: true }));
-    setError(prev => ({ ...prev, cart: null }));
     try {
       const res = await fetch(`${API_URL}/api/pedidos/carrinho`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      
       if (!res.ok) throw new Error('Falha ao buscar carrinho');
-      const data = await res.json();
-      
-      setCartItems(data);
-
-    } catch (err) {
-      setError(prev => ({ ...prev, cart: err.message }));
-    } finally {
-      setLoadingData(prev => ({ ...prev, cart: false }));
-    }
+      setCartItems(await res.json());
+    } catch (err) { setError(prev => ({ ...prev, cart: err.message })); }
+    finally { setLoadingData(prev => ({ ...prev, cart: false })); }
   };
 
+  // --- AÇÕES DO CARRINHO/PEDIDOS ---
   const handleRemoveItem = async (id) => {
     if (!window.confirm('Remover este item?')) return;
     try {
       const res = await fetch(`${API_URL}/api/pedidos/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Falha ao remover o item.');
-      setCartItems(prev => (prev ? prev.filter(i => i.id !== id) : []));
-    } catch (err) {
-      alert('Erro ao remover: ' + err.message);
-    }
+      if (!res.ok) throw new Error('Erro ao remover');
+      setCartItems(prev => prev.filter(i => i.id !== id));
+    } catch (err) { alert(err.message); }
   };
 
   const handleClearCart = async () => {
@@ -200,37 +167,26 @@ const Perfil = () => {
     try {
       await fetch(`${API_URL}/api/pedidos/carrinho`, { method: 'DELETE' });
       setCartItems([]);
-    } catch (err) {
-      alert('Erro ao limpar: ' + err.message);
-    }
+    } catch (err) { alert(err.message); }
   };
 
   const handleProduzir = async (id) => {
     setLoadingData(prev => ({ ...prev, produce: id }));
-    setError(prev => ({ ...prev, produce: null }));
     try {
       const res = await fetch(`${API_URL}/api/pedidos/${id}/produzir`, { method: 'POST' });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.erro || 'Falha');
-      }
+      if (!res.ok) throw new Error((await res.json()).erro || 'Falha');
       return true;
     } catch (err) {
       setError(prev => ({ ...prev, produce: err.message }));
       return false;
-    } finally {
-      setLoadingData(prev => ({ ...prev, produce: null }));
-    }
+    } finally { setLoadingData(prev => ({ ...prev, produce: null })); }
   };
 
   const handleFinalizarCompra = async () => {
     setLoadingData(prev => ({ ...prev, produce: 'all' }));
     let ok = true;
     for (const item of cartItems) {
-      if (!(await handleProduzir(item.id))) {
-        ok = false;
-        break;
-      }
+      if (!(await handleProduzir(item.id))) { ok = false; break; }
     }
     setLoadingData(prev => ({ ...prev, produce: null }));
     if (ok) {
@@ -242,47 +198,45 @@ const Perfil = () => {
   };
 
   const confirmarEntrega = async (pedidoId) => {
-    if (!window.confirm('Confirmar que recebeu o carro? Isso libera o slot.')) return;
+    if (!window.confirm('Confirmar recebimento?')) return;
     setLoadingData(prev => ({ ...prev, entregar: pedidoId }));
-    setError(prev => ({ ...prev, entregar: null }));
     try {
       const response = await fetch(`${API_URL}/api/pedidos/${pedidoId}/entregar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
       });
-      if (!response.ok) {
-        const erro = await response.json();
-        throw new Error(erro.erro || 'Falha na entrega');
-      }
+      if (!response.ok) throw new Error((await response.json()).erro || 'Erro');
       alert('Entrega confirmada! Slot liberado.');
       fetchOrders();
-    } catch (err) {
-      setError(prev => ({ ...prev, entregar: err.message }));
-      alert('Erro: ' + err.message);
-    } finally {
-      setLoadingData(prev => ({ ...prev, entregar: null }));
-    }
+    } catch (err) { alert(err.message); } 
+    finally { setLoadingData(prev => ({ ...prev, entregar: null })); }
   };
+
+  // --- LÓGICA DE EDIÇÃO DO PERFIL ---
 
   const handleInputChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleEditToggle = () => {
-    if (isEditing) {
-      // Se cancelou, volta os dados originais
-      setFormData({
-        name: user.nome || '',
-        email: user.email || '',
-        phone: user.telefone || '',
-        address: user.endereco || ''
-      });
-    }
-    setIsEditing(prev => !prev);
+  const handleEditClick = (e) => {
+    e.preventDefault(); // Evita submit
+    setIsEditing(true);
   };
 
-  // --- NOVA FUNÇÃO DE SALVAR DADOS ---
+  const handleCancelEdit = (e) => {
+    e.preventDefault();
+    setIsEditing(false);
+    // Restaura os dados originais e limpa a senha
+    setFormData({
+      name: user.nome || '',
+      email: user.email || '',
+      phone: user.telefone || '',
+      address: user.endereco || '',
+      password: ''
+    });
+  };
+
   const handleSaveChanges = async (e) => {
     e.preventDefault();
     setIsSavingProfile(true);
@@ -291,7 +245,8 @@ const Perfil = () => {
       const payload = {
         nome: formData.name,
         telefone: formData.phone,
-        endereco: formData.address
+        endereco: formData.address,
+        senha: formData.password // Envia a senha (pode ser vazia)
       };
 
       const response = await fetch(`${API_URL}/api/usuarios`, {
@@ -310,14 +265,14 @@ const Perfil = () => {
 
       const dadosAtualizados = await response.json();
 
-      // Atualiza o contexto (se a função setUser existir no Contexto)
+      // Atualiza o contexto global
       if (setUser) {
-        // Mesclamos o user atual com os dados novos para garantir
         setUser(prev => ({ ...prev, ...dadosAtualizados }));
       }
       
       alert('Perfil atualizado com sucesso!');
       setIsEditing(false);
+      setFormData(prev => ({ ...prev, password: '' })); // Limpa o campo senha após salvar
 
     } catch (error) {
       alert(error.message);
@@ -326,55 +281,29 @@ const Perfil = () => {
     }
   };
 
-  // --- SEÇÃO DE LOADING DO CONTEXTO ---
-  if (loading) {
-    return (
-      <div className="loading-screen" style={{
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh', 
-        color: '#fff', 
-        fontSize: '1.5rem'
-      }}>
-        Verificando autenticação...
-      </div>
-    );
-  }
-
+  if (loading) return <div className="loading-screen">Carregando...</div>;
   if (!user) return null;
 
   return (
     <>
-      {detailsModalItem && (
-        <DetalhesModal item={detailsModalItem} onClose={() => setDetailsModalItem(null)} />
-      )}
+      {detailsModalItem && <DetalhesModal item={detailsModalItem} onClose={() => setDetailsModalItem(null)} />}
 
       <div className="profile-container">
         <aside className="profile-sidebar">
           <div className="user-info">
             <div className="user-avatar-placeholder" style={{
-                width: '80px', height: '80px', borderRadius: '50%', 
-                backgroundColor: '#333', color: '#fff', display: 'flex', 
-                alignItems: 'center', justifyContent: 'center', fontSize: '32px',
-                margin: '0 auto 15px'
+                width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#333', color: '#fff', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', margin: '0 auto 15px'
             }}>
                 {user.nome ? user.nome.charAt(0).toUpperCase() : 'U'}
             </div>
-            {/* O nome atualiza aqui automaticamente agora */}
             <h2>{user.nome}</h2>
             <p>Membro da AutoMod</p>
           </div>
           <nav className="profile-nav">
-            <button className={activeTab === 'perfil' ? 'active' : ''} onClick={() => setActiveTab('perfil')}>
-              <UserIcon /> Meu Perfil
-            </button>
-            <button className={activeTab === 'carrinho' ? 'active' : ''} onClick={() => setActiveTab('carrinho')}>
-              <CartIcon /> Carrinho
-            </button>
-            <button className={activeTab === 'pedidos' ? 'active' : ''} onClick={() => setActiveTab('pedidos')}>
-              <BoxIcon /> Meus Pedidos
-            </button>
+            <button className={activeTab === 'perfil' ? 'active' : ''} onClick={() => setActiveTab('perfil')}><UserIcon /> Meu Perfil</button>
+            <button className={activeTab === 'carrinho' ? 'active' : ''} onClick={() => setActiveTab('carrinho')}><CartIcon /> Carrinho</button>
+            <button className={activeTab === 'pedidos' ? 'active' : ''} onClick={() => setActiveTab('pedidos')}><BoxIcon /> Meus Pedidos</button>
             <button className="logout-button" onClick={handleLogout}><LogoutIcon /> Sair</button>
           </nav>
         </aside>
@@ -384,6 +313,7 @@ const Perfil = () => {
             <section id="perfil">
               <h1>Detalhes do Perfil</h1>
               <p className="section-description">Suas informações pessoais.</p>
+              
               <form onSubmit={handleSaveChanges} className="profile-form">
                 <div className="form-grid">
                   <div className="form-group">
@@ -416,6 +346,7 @@ const Perfil = () => {
                       type="tel"
                       id="phone"
                       name="phone"
+                      placeholder={isEditing ? "(XX) XXXXX-XXXX" : "Não informado"}
                       value={formData.phone}
                       onChange={handleInputChange}
                       disabled={!isEditing || isSavingProfile}
@@ -427,33 +358,46 @@ const Perfil = () => {
                       type="text"
                       id="address"
                       name="address"
+                      placeholder={isEditing ? "Rua, Bairro, Cidade..." : "Não informado"}
                       value={formData.address}
                       onChange={handleInputChange}
                       disabled={!isEditing || isSavingProfile}
                     />
                   </div>
+
+                  {/* Campo de Senha só aparece se estiver editando */}
+                  {isEditing && (
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label htmlFor="password">Nova Senha (deixe em branco para não alterar)</label>
+                      <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Digite sua nova senha aqui"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        disabled={isSavingProfile}
+                        minLength={6}
+                      />
+                    </div>
+                  )}
                 </div>
+
                 <div className="form-actions">
-                  {isEditing ? (
+                  {/* Lógica de botões corrigida */}
+                  {!isEditing ? (
+                    <button type="button" className="button-primary" onClick={handleEditClick}>
+                      Editar Perfil
+                    </button>
+                  ) : (
                     <>
-                      <button 
-                        type="submit" 
-                        className="button-primary"
-                        disabled={isSavingProfile}
-                      >
-                        {isSavingProfile ? 'Salvando...' : 'Salvar'}
+                      <button type="submit" className="button-primary" disabled={isSavingProfile}>
+                        {isSavingProfile ? 'Salvando...' : 'Salvar Alterações'}
                       </button>
-                      <button 
-                        type="button" 
-                        className="button-secondary" 
-                        onClick={handleEditToggle}
-                        disabled={isSavingProfile}
-                      >
+                      <button type="button" className="button-secondary" onClick={handleCancelEdit} disabled={isSavingProfile}>
                         Cancelar
                       </button>
                     </>
-                  ) : (
-                    <button type="button" className="button-primary" onClick={handleEditToggle}>Editar</button>
                   )}
                 </div>
               </form>
@@ -463,16 +407,12 @@ const Perfil = () => {
           {activeTab === 'carrinho' && (
             <section id="carrinho">
               <h1>Carrinho de Compras</h1>
-              <p className="section-description">Confira os seus carros personalizados antes de finalizar a compra.</p>
               <div className="orders-table-container">
                 <table className="orders-table">
-                  <thead>
-                    <tr><th>ID</th><th>Carro</th><th>Data</th><th>Valor</th><th>Ações</th></tr>
-                  </thead>
+                  <thead><tr><th>ID</th><th>Carro</th><th>Data</th><th>Valor</th><th>Ações</th></tr></thead>
                   <tbody>
                     {loadingData.cart && <tr><td colSpan="5">Carregando...</td></tr>}
-                    {error.cart && <tr><td colSpan="5" className="error-message">{error.cart}</td></tr>}
-                    {!loadingData.cart && cartItems.length === 0 && <tr><td colSpan="5">Carrinho vazio</td></tr>}
+                    {!loadingData.cart && cartItems.length === 0 && <tr><td colSpan="5">Vazio</td></tr>}
                     {cartItems.map(item => (
                       <tr key={item.id}>
                         <td>#{String(item.id).padStart(5, '0')}</td>
@@ -480,44 +420,34 @@ const Perfil = () => {
                         <td>{formatarData(item.criado_em)}</td>
                         <td>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valor)}</td>
                         <td className="acoes-carrinho">
-                          <button className="btn-details-text" onClick={() => setDetailsModalItem(item)}>
-                            Ver Detalhes
-                          </button>
-                          <button className="remove-item-button" onClick={() => handleRemoveItem(item.id)}>
-                            <TrashIcon />
-                          </button>
+                          <button className="btn-details-text" onClick={() => setDetailsModalItem(item)}>Detalhes</button>
+                          <button className="remove-item-button" onClick={() => handleRemoveItem(item.id)}><TrashIcon /></button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-
               {cartItems.length > 0 && (
                 <div className="cart-summary">
                   <button className="button-secondary clear-cart-button" onClick={handleClearCart}>Limpar</button>
                   <button className="button-primary checkout-button" onClick={handleFinalizarCompra} disabled={!!loadingData.produce}>
-                    {loadingData.produce ? 'Enviando...' : 'Finalizar Compra'}
+                    {loadingData.produce ? 'Enviando...' : 'Finalizar'}
                   </button>
                 </div>
               )}
-              {error.produce && <p className="error-message produce-error">{error.produce}</p>}
             </section>
           )}
 
           {activeTab === 'pedidos' && (
             <section id="pedidos">
-              <h1>Histórico de Pedidos</h1>
+              <h1>Histórico</h1>
               <div className="orders-table-container">
                 <table className="orders-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th><th>Carro</th><th>Data</th><th>Estado</th><th>Valor</th><th>Slot</th><th>Ação</th>
-                    </tr>
-                  </thead>
+                  <thead><tr><th>ID</th><th>Carro</th><th>Data</th><th>Estado</th><th>Valor</th><th>Slot</th><th>Ação</th></tr></thead>
                   <tbody>
                     {loadingData.orders && <tr><td colSpan="7">Carregando...</td></tr>}
-                    {!loadingData.orders && orders.length === 0 && <tr><td colSpan="7">Nenhum pedido encontrado.</td></tr>}
+                    {!loadingData.orders && orders.length === 0 && <tr><td colSpan="7">Sem pedidos</td></tr>}
                     {orders.map(order => (
                       <tr key={order.id}>
                         <td>#{String(order.id).padStart(5, '0')}</td>
@@ -528,12 +458,8 @@ const Perfil = () => {
                         <td>{order.slot_expedicao || '---'}</td>
                         <td>
                           {order.status === 'Concluído' && (
-                            <button
-                              className="btn-entregar"
-                              onClick={() => confirmarEntrega(order.id)}
-                              disabled={loadingData.entregar === order.id}
-                            >
-                              {loadingData.entregar === order.id ? 'Liberando...' : <>Confirmar Entrega <CheckIcon /></>}
+                            <button className="btn-entregar" onClick={() => confirmarEntrega(order.id)} disabled={loadingData.entregar === order.id}>
+                              {loadingData.entregar === order.id ? '...' : <CheckIcon />}
                             </button>
                           )}
                           {order.status === 'Entregue' && <span className="status-entregue">Entregue</span>}
